@@ -9,7 +9,7 @@ def createDataset(data, input_days=30, output_days=7, input_features=['Open', 'H
 
     input_data = data[input_features].values
     output_data = data[output_feature].values
-    print(f"output_data: {output_data}, shape: {output_data.shape}")
+    # print(f"output_data: {output_data}, shape: {output_data.shape}")
 
     total_days = len(data)
 
@@ -24,6 +24,7 @@ def createDataset(data, input_days=30, output_days=7, input_features=['Open', 'H
 
 # Download historical data
 data = yf.download("AAPL", period = "10y")
+print(data.tail())
 
 x, y = createDataset(data)
 

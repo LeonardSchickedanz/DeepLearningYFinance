@@ -2,8 +2,9 @@ import model
 import matplotlib.pyplot as plt
 import torch
 import data
+import yfinance as yf
+import numpy as np
 
-print("test")
 # Pick manual seed
 torch.manual_seed(41)
 
@@ -36,7 +37,7 @@ for i in range(epochs):
     losses.append(loss.item())
 
     # print every 10 epoch
-    if i % 10 == 0:
+    if i % 100 == 0:
         print(f"Epoch: {i} loss: {loss.item():.4f}")
 
     # back propagation
@@ -45,6 +46,9 @@ for i in range(epochs):
     loss.backward()  # calculate gradients
     optimizer.step()  # updates weights, based on calculated gradients
 
+# quantopian
+# arima und prophet zeitreihenpredicter
+
 # plot losses
 plt.figure(figsize=(10, 5))
 plt.plot(range(1, epochs + 1), losses, label='Training Loss')
@@ -52,5 +56,22 @@ plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.title('Training Loss over epochs')
 plt.legend()
+plt.grid(True)
+plt.show()
+
+# Download historical data
+d = yf.download("AAPL", period="10y")
+d = np.array(d)
+# transform y_pred to numpy
+y_pred_np = y_pred.detach().numpy()
+
+# plot historical data
+plt.figure(figsize=(10, 5))
+plt.plot(d['Date'], d['Close'], label='Actual', color='blue')
+plt.plot(y_pred_np['Date'], y_pred_np, label = 'Predicted', color = 'red')
+
+plt.legend()
+plt.xlabel('Date')
+plt.ylabel('Close Price')
 plt.grid(True)
 plt.show()
