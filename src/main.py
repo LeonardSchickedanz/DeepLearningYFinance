@@ -5,6 +5,19 @@ import data
 import yfinance as yf
 import numpy as np
 
+# Importiere die benötigten Module
+from dotenv import load_dotenv
+import os
+
+# Lade die Variablen aus der .env Datei
+load_dotenv()
+
+# Zugriff auf den API Key aus der .env Datei
+api_key = os.getenv("API_KEY")
+
+# Jetzt kannst du den API Key verwenden
+print(f"Dein API Key ist: {api_key}")
+
 # Pick manual seed
 torch.manual_seed(41)
 
