@@ -1,18 +1,9 @@
 import model
 import matplotlib.pyplot as plt
 import torch
-import data
+import yf_data
 import yfinance as yf
 import numpy as np
-from dotenv import load_dotenv
-import os
-
-# load variable from .env file
-load_dotenv()
-
-api_key = os.getenv("API_KEY")
-
-print(f"Dein API Key ist: {api_key}")
 
 # Pick manual seed
 torch.manual_seed(41)

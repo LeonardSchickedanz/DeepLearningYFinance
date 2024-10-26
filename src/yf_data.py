@@ -3,7 +3,7 @@ import yfinance as yf
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-def createDataset(data, input_days=30, output_days=7, input_features=['Open', 'High', 'Low', 'Close', 'Volume'], output_feature='Close'):
+def create_raw_market_data(data, input_days=30, output_days=7, input_features=['Open', 'High', 'Low', 'Close', 'Volume'], output_feature='Close'):
 
     x,y = [], []
 
@@ -26,7 +26,7 @@ def createDataset(data, input_days=30, output_days=7, input_features=['Open', 'H
 data = yf.download("AAPL", period = "10y")
 print(data.tail())
 
-x, y = createDataset(data)
+# x, y = createDataset(data)
 
 # train test split
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=41)
