@@ -44,16 +44,16 @@ def api_raw_data_to_excel():
     api_d_time_series = TimeSeries(key=API_KEY, output_format='pandas')
 
     d_quarterly_income, _ = api_d_fundamental_data.get_income_statement_quarterly(symbol='AAPL')
-    d_time_series, _ = api_d_time_series.get_daily(symbol='AAPL', outputsize='compact')  # 100 days
+    d_time_series, _ = api_d_time_series.get_daily(symbol='AAPL', outputsize='full')
 
-    d_quarterly_income.to_excel('../data/d_fundamental_raw.xlsx', index=False)
+    d_quarterly_income.to_excel('../data/d_quarterly_income_raw.xlsx', index=False)
     d_time_series.to_excel('../data/d_timeseries_raw.xlsx', index=False)
 
 #api_raw_data_to_excel()
 
 
-d_quarterly_income = pd.read_excel('../data/d_fundamental_raw.xlsx')
-d_time_series = pd.read_excel('../data/d_timeseries_raw.xlsx')
+d_quarterly_income = pd.read_excel('../data/d_quarterly_income_raw.xlsx')
+d_time_series = pd.read_excel('../data/d_timeseries_raw.xlsx') # 6288 days currently in there
 
 # clean data
 # d_time_series = d_time_series.drop(columns=['date'])
@@ -63,23 +63,44 @@ d_quarterly_income = d_quarterly_income.drop(columns='reportedCurrency')
 d_quarterly_income.replace("None", np.nan, inplace=True)
 d_quarterly_income = d_quarterly_income.fillna(0) # replaces ever None with 0
 
-d_quarterly_income.to_excel('../data/d_fundamental.xlsx', index=False)
+d_quarterly_income.to_excel('../data/d_quarterly_income.xlsx', index=False)
 d_time_series.to_excel('../data/d_timeseries.xlsx', index=False)
 
-d_quarterly_income = pd.read_excel('../data/d_fundamental.xlsx')
 d_time_series = pd.read_excel('../data/d_timeseries.xlsx')
+d_quarterly_income = pd.read_excel('../data/d_quarterly_income.xlsx')
 
 # create tensors
-f_time_series = 6 # open, high, low, close, adj close, volume
-f_quarterly_income = 20
+f_time_series = d_time_series.shape[1] # open, high, low, close, volume
+bs_time_series = d_time_series.shape[0]
+f_quarterly_income = d_quarterly_income.shape[1]
+bs_quarterly_income = d_quarterly_income.shape[0]
 
-# create tensors
+f_input = f_time_series + f_quarterly_income # 28
+
+# Reshape
 t_time_series = torch.tensor(d_time_series.values).float()
-t_quarterly_income = torch.tensor(d_quarterly_income.values).float()
+t_time_series = t_time_series[-5850:]  # last 5850 days # Shape: (5850, 5)
+t_quarterly_income = torch.tensor(d_quarterly_income.values).float() # Shape: (65, 23)
 
-#t_quarterly_income = t_quarterly_income.unsqueeze(0).expand(100, -1)  # transform to (100, 20) for cat
-#t_combined = torch.cat((t_time_series, t_quarterly_income), dim=1) #(100, 26)
+# First expand t_quarterly_income to match batch size of t_time_series
+repeats = 5850 // 65
 
-# now call model with 260 input neurons
+# Expand quarterly income data
+t_quarterly_income_expanded = t_quarterly_income.repeat((repeats, 1))
+
+# Now combine both tensors along feature dimension (dim=1)
+t_combined = torch.cat([t_time_series, t_quarterly_income_expanded], dim=1)
+
+# Verify shapes
+print("Time series shape:", t_time_series.size())  # Should be (5850, 5)
+print("Expanded quarterly shape:", t_quarterly_income_expanded.size())  # Should be (5850, 23)
+print("Combined tensor shape:", t_combined.size())  # Should be (5850, 28)
+
+
+
+
+
+
+
 
 
