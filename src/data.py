@@ -51,7 +51,6 @@ def api_raw_data_to_excel():
 
 #api_raw_data_to_excel()
 
-
 d_quarterly_income = pd.read_excel('../data/d_quarterly_income_raw.xlsx')
 d_time_series = pd.read_excel('../data/d_timeseries_raw.xlsx') # 6288 days currently in there
 
@@ -92,14 +91,64 @@ t_quarterly_income_expanded = t_quarterly_income.repeat((repeats, 1))
 t_combined = torch.cat([t_time_series, t_quarterly_income_expanded], dim=1)
 
 # Verify shapes
-print("Time series shape:", t_time_series.size())  # Should be (5850, 5)
-print("Expanded quarterly shape:", t_quarterly_income_expanded.size())  # Should be (5850, 23)
-print("Combined tensor shape:", t_combined.size())  # Should be (5850, 28)
+#print("\nTime series shape:", t_time_series.size())  # Should be (5850, 5)
+#print("Expanded quarterly shape:", t_quarterly_income_expanded.size())  # Should be (5850, 23)
+#print("Combined tensor shape:", t_combined.size())  # Should be (5850, 28)
+
+from sklearn.preprocessing import MinMaxScaler
+import numpy as np
 
 
+def prepare_training_data(tensor, forecast_horizon=30):
+    """
+    Prepare training data with scaling
+
+    Args:
+        tensor: Input tensor with OHLCV data
+        forecast_horizon: Number of days to forecast ahead
+
+    Returns:
+        X_train, y_train, X_test, y_test, scaler
+    """
+    # Initialize scaler
+    scaler = MinMaxScaler(feature_range=(0, 1))
+
+    # Convert tensor to numpy for scaling
+    data_np = tensor.numpy()
+
+    # Fit scaler on all data to ensure consistent scaling
+    scaled_data = scaler.fit_transform(data_np)
+
+    # Convert back to tensor
+    scaled_tensor = torch.FloatTensor(scaled_data)
+
+    # Total number of samples we can create
+    n_samples = len(scaled_tensor) - forecast_horizon
+
+    # Prepare X (features) and y (targets)
+    X = scaled_tensor[:n_samples]  # Input features for each day
+    y = scaled_tensor[forecast_horizon:, 3:4]  # Close price (4th column)
+
+    # Calculate split point (80/20)
+    split_idx = int(n_samples * 0.8)
+
+    # Split into train and test
+    X_train = X[:split_idx]
+    y_train = y[:split_idx]
+    X_test = X[split_idx:]
+    y_test = y[split_idx:]
+
+    # Print shapes and sample values for verification
+    print(f"Training samples: {X_train.shape}")
+    print(f"Test samples: {X_test.shape}")
+    print(f"\nSample scaled values:")
+    print(f"X_train first row: {X_train[0]}")
+    print(f"y_train first value: {y_train[0]}")
+
+    return X_train, y_train, X_test, y_test, scaler
 
 
-
+print(t_time_series)
 
 
 
