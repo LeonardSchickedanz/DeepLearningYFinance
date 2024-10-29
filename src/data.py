@@ -147,7 +147,6 @@ def prepare_training_data(tensor, forecast_horizon=30):
 
     return X_train, y_train, X_test, y_test, scaler
 
-
 print(t_time_series)
 
 
