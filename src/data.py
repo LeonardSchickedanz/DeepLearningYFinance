@@ -1,13 +1,10 @@
 import torch
 import yfinance as yf
 import numpy as np
-from sklearn.model_selection import train_test_split
 from dotenv import load_dotenv
 import os
 from alpha_vantage.timeseries import TimeSeries
 from alpha_vantage.fundamentaldata import FundamentalData
-from pprint import pprint
-import matplotlib.pyplot as plt
 import pandas as pd
 
 # t_ = tensor
@@ -100,34 +97,19 @@ import numpy as np
 
 
 def prepare_training_data(tensor, forecast_horizon=30):
-    """
-    Prepare training data with scaling
 
-    Args:
-        tensor: Input tensor with OHLCV data
-        forecast_horizon: Number of days to forecast ahead
-
-    Returns:
-        X_train, y_train, X_test, y_test, scaler
-    """
-    # Initialize scaler
+    #  scaler
     scaler = MinMaxScaler(feature_range=(0, 1))
-
-    # Convert tensor to numpy for scaling
     data_np = tensor.numpy()
-
-    # Fit scaler on all data to ensure consistent scaling
     scaled_data = scaler.fit_transform(data_np)
-
-    # Convert back to tensor
     scaled_tensor = torch.FloatTensor(scaled_data)
 
-    # Total number of samples we can create
+    # total number of samples we can create
     n_samples = len(scaled_tensor) - forecast_horizon
 
     # Prepare X (features) and y (targets)
     X = scaled_tensor[:n_samples]  # Input features for each day
-    y = scaled_tensor[forecast_horizon:, 3:4]  # Close price (4th column)
+    y = scaled_tensor[forecast_horizon:, 3:4]  # select close price (4th column)
 
     # Calculate split point (80/20)
     split_idx = int(n_samples * 0.8)
