@@ -12,3 +12,8 @@ def plot_losses(losses, test_losses):
     plt.grid(True)
     plt.show()
 
+def plot_stocks(data):
+    plt.plot(data)
+    plt.title('Test')
+    plt.show()
+    plt.grid()

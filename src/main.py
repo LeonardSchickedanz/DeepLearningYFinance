@@ -13,11 +13,11 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 X_train, y_train, X_test, y_test, scaler = data.prepare_training_data(data.t_combined)
 
 # Print data shapes and sample values
-print("Training shapes:", X_train.shape, y_train.shape)
-print("Test shapes:", X_test.shape, y_test.shape)
-print("\nSample values:")
-print("X_train:", X_train[0])
-print("y_train:", y_train[0])
+#print("Training shapes:", X_train.shape, y_train.shape)
+#print("Test shapes:", X_test.shape, y_test.shape)
+#print("\nSample values:")
+#print("X_train:", X_train[0])
+#print("y_train:", y_train[0])
 
 # Training loop
 model.train()
