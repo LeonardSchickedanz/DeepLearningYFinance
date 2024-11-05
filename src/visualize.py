@@ -1,5 +1,11 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
+#import data as d
+from src.data import d_quarterly_income
+import pandas as pd
+from datetime import datetime, timedelta
+
 
 def plot_losses(losses, test_losses):
     plt.figure(figsize=(10, 5))
@@ -17,3 +23,4 @@ def plot_stocks(data):
     plt.title('Test')
     plt.show()
     plt.grid()
+

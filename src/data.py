@@ -67,29 +67,53 @@ d_time_series.to_excel('../data/d_timeseries.xlsx', index=True)
 d_time_series = pd.read_excel('../data/d_timeseries.xlsx', index_col=0)
 d_quarterly_income = pd.read_excel('../data/d_quarterly_income.xlsx', index_col=0)
 
-def stretch_quarterly_income(data):
-    # Erstelle einen DataFrame aus den Daten
-    df = pd.DataFrame(data)
 
-    # Konvertiere das fiscalDateEnding-Datum in ein datetime-Objekt
-    df['fiscalDateEnding'] = pd.to_datetime(df['fiscalDateEnding'])
+def stretch_data(data_frame):
+    new_df = pd.DataFrame(columns=data_frame.columns) # neue data frame
+    for i in range(4):
+        row1 = data_frame.iloc[i]
+        row2 = data_frame.iloc[i+1]
 
-    # Erstelle eine Liste mit allen Monaten, die abgedeckt werden
-    all_months = pd.date_range(start=df['fiscalDateEnding'].min(), end=df['fiscalDateEnding'].max(), freq='ME')
+        upper_date = row1.iloc[0]
+        lower_date = row2.iloc[0]
+        print("upper:")
+        print(upper_date)
+        print("lower")
+        print(lower_date)
+        print(f"i: {i}")
 
-    # Initialisiere einen leeren DataFrame, um die Daten zu speichern
-    stretched_data = pd.DataFrame()
+        upper_part = data_frame.iloc[:i]  # Teil bis idx2 (ohne idx2)
+        #lower_part = data_frame.iloc[i:]  # Teil ab idx2
 
-    # Iteriere über die Quartale und erstelle die monatlichen Datensätze
-    for _, row in df.iterrows():
-        fiscal_date = row['fiscalDateEnding']
-        monthly_data = pd.DataFrame({col: [row[col]] for col in df.columns},
-                                    index=[fiscal_date + pd.Timedelta(days=i) for i in range(3)])
-        stretched_data = pd.concat([stretched_data, monthly_data], ignore_index=True)
+        current_date = lower_date #+ pd.Timedelta(days=1)
+        row_to_use = row2.copy()
 
-    print(stretched_data)
+        while current_date < upper_date:
+            row_to_use['date']=current_date
+            upper_part.loc[len(upper_part)] = row_to_use # häng an den oberen teil unten neues dran
+            current_date += pd.Timedelta(days=1)
 
-stretch_quarterly_income(d_quarterly_income)
+        upper_part = upper_part.iloc[::-1].reset_index(drop=True)
+        for i in range(0, len(upper_part)): # hänge alles vom oberen teil an new_df
+            new_df.loc[len(new_df)] = upper_part.iloc[i]
+
+    return new_df
+
+
+def filter_irregular_dates(df):
+    # Konvertiere die "date"-Spalte in Datetime-Format, falls dies noch nicht erfolgt ist
+    df['date'] = pd.to_datetime(df['date'])
+
+    # Sortiere den DataFrame nach Datum, falls die Reihenfolge nicht gewährleistet ist
+    df = df.sort_values(by='date').reset_index(drop=True)
+
+    # Prüfe auf tägliche Intervalle
+    daily_diffs = (df['date'] - df['date'].shift(-1)).dt.days.abs()
+
+    # Nur Zeilen behalten, die in täglichen Intervallen liegen
+    df = df[daily_diffs == 1].reset_index(drop=True)
+
+    return df
 
 # create time series tensor
 f_time_series = d_time_series.shape[1] # open, high, low, close, volume
