@@ -1,3 +1,4 @@
+from matplotlib import pyplot as plt
 from src.data_xlsx import data
 import model as model_class
 import torch
@@ -51,3 +52,6 @@ for i in range(epochs):
 
 # plot losses
 v.plot_losses(losses, test_losses)
+
+#plt.plot(y_pred)
+#plt.plot(y_train)

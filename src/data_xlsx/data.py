@@ -1,8 +1,6 @@
 import torch
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
-import os
-import stat
 
 # t_ = tensor
 # d_ = raw data_xlsx
@@ -33,6 +31,9 @@ pd.set_option('display.width', None)
 # read data from excel
 d_time_series = pd.read_excel(r'C:\Users\LeonardSchickedanz\PycharmProjects\PredictStockPrice\data_xlsx\d_timeseries.xlsx', index_col=0)
 d_quarterly_income = pd.read_excel(r'C:\Users\LeonardSchickedanz\PycharmProjects\PredictStockPrice\data_xlsx\d_quarterly_income.xlsx', index_col=0)
+
+print(d_time_series.head())
+print(d_quarterly_income.head()) # Warum ist das anders?
 
 f_time_series = d_time_series.shape[1] # date, open, high, low, close, volume
 bs_time_series = d_time_series.shape[0] # 6
@@ -86,7 +87,7 @@ def prepare_training_data(tensor, forecast_horizon=30):
 # Plot erstellen
 #plt.figure(figsize=(10, 5))
 #plt.plot(d_time_series.index, d_time_series['4. close'], label="Schlusskurs")
-
+#print(t_combined[0])
 #plt.show()
 
 
