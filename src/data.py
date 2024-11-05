@@ -60,13 +60,7 @@ d_quarterly_income = d_quarterly_income.drop(columns='depreciation')
 d_quarterly_income = d_quarterly_income.drop(columns='reportedCurrency')
 d_quarterly_income.replace("None", np.nan)
 d_quarterly_income = d_quarterly_income.fillna(0) # replaces ever None with 0
-
-d_quarterly_income.to_excel('../data/d_quarterly_income.xlsx', index=True)
-d_time_series.to_excel('../data/d_timeseries.xlsx', index=True)
-
-d_time_series = pd.read_excel('../data/d_timeseries.xlsx', index_col=0)
-d_quarterly_income = pd.read_excel('../data/d_quarterly_income.xlsx', index_col=0)
-
+print(d_quarterly_income)
 
 def stretch_data(data_frame):
     new_df = pd.DataFrame(columns=data_frame.columns) # neue data frame
@@ -98,22 +92,17 @@ def stretch_data(data_frame):
             new_df.loc[len(new_df)] = upper_part.iloc[i]
 
     return new_df
+d_quarterly_income=stretch_data(d_quarterly_income)
+d_quarterly_income = d_quarterly_income.drop_duplicates(subset=['date']).sort_values(by='date').reset_index(drop=True)
 
+print(d_quarterly_income)
+print('------------------------------------------------')
+d_quarterly_income.to_excel('../data/d_quarterly_income.xlsx', index=True)
+d_time_series.to_excel('../data/d_timeseries.xlsx', index=True)
 
-def filter_irregular_dates(df):
-    # Konvertiere die "date"-Spalte in Datetime-Format, falls dies noch nicht erfolgt ist
-    df['date'] = pd.to_datetime(df['date'])
+d_time_series = pd.read_excel('../data/d_timeseries.xlsx', index_col=0)
+d_quarterly_income = pd.read_excel('../data/d_quarterly_income.xlsx', index_col=0)
 
-    # Sortiere den DataFrame nach Datum, falls die Reihenfolge nicht gewährleistet ist
-    df = df.sort_values(by='date').reset_index(drop=True)
-
-    # Prüfe auf tägliche Intervalle
-    daily_diffs = (df['date'] - df['date'].shift(-1)).dt.days.abs()
-
-    # Nur Zeilen behalten, die in täglichen Intervallen liegen
-    df = df[daily_diffs == 1].reset_index(drop=True)
-
-    return df
 
 # create time series tensor
 f_time_series = d_time_series.shape[1] # open, high, low, close, volume
