@@ -22,11 +22,11 @@ def create_raw_market_data(data, input_days=30, output_days=7, input_features=['
 
     return np.array(x), np.array(y)
 
-# Download historical data
+# Download historical data_xlsx
 data = yf.download("AAPL", period = "10y")
 print(data.tail())
 
-# x, y = createDataset(data)
+# x, y = createDataset(data_xlsx)
 
 # train test split
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=41)

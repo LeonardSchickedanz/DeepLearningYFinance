@@ -1,0 +1,6 @@
+TODO
+
+- USD drinnen lassen
+- plotly mit pandas 
+- ein großes netz, in dem sich Aktien gegenseitig beeinflussen
+- cstm, rnn googlen
