@@ -27,10 +27,6 @@ d_time_series = pd.read_excel('../../data_xlsx/d_timeseries_raw.xlsx', index_col
 r_time_series = d_time_series
 d_time_series = d_time_series.reset_index()
 
-d_quarterly_income.to_excel('../../data_xlsx/d_quarterly_income1.xlsx', index=True)
-d_time_series.to_excel('../../data_xlsx/d_timeseries1.xlsx', index=True)
-
-
 # clean data_xlsx
 d_quarterly_income = d_quarterly_income.drop(columns='depreciation')
 d_quarterly_income = d_quarterly_income.drop(columns='reportedCurrency')
@@ -38,8 +34,6 @@ d_quarterly_income.replace("None", np.nan)
 d_quarterly_income = d_quarterly_income.fillna(0) # replaces ever None with 0
 d_quarterly_income['fiscalDateEnding'] = pd.to_datetime(d_quarterly_income['fiscalDateEnding'], errors='coerce')
 
-d_quarterly_income.to_excel('../../data_xlsx/d_quarterly_income2.xlsx', index=True)
-d_time_series.to_excel('../../data_xlsx/d_timeseries2.xlsx', index=True)
 
 def stretch_data(data_frame, column_name, months, today):
     new_df = pd.DataFrame(columns=data_frame.columns)
@@ -77,9 +71,6 @@ counter_months = d_quarterly_income.iloc[:, 0].dt.to_period('M').nunique()
 d_quarterly_income=stretch_data(d_quarterly_income, column_name = 'fiscalDateEnding', months=counter_months, today=d_time_series.iloc[0][0])
 
 d_quarterly_income = d_quarterly_income.iloc[::-1].reset_index(drop=True)
-
-d_quarterly_income.to_excel('../../data_xlsx/d_quarterly_income3.xlsx', index=True)
-d_time_series.to_excel('../../data_xlsx/d_timeseries3.xlsx', index=True)
 
 # set unix time stamps
 d_quarterly_income['fiscalDateEnding'] = pd.to_datetime(d_quarterly_income['fiscalDateEnding'])
