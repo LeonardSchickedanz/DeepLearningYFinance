@@ -79,9 +79,9 @@ def plot_stocks(datum, wert1, wert2):
     fig.show()
 
 # Methode aufrufen
-d_time_series = pd.read_excel('../data_xlsx/d_timeseries_raw.xlsx', index_col=0)
-datum=d_time_series.index
-wert = d_time_series['4. close']
-wert2 = wert + 100
-plot_stocks(datum, wert, wert2)
+#d_time_series = pd.read_excel('../data_xlsx/d_timeseries_raw.xlsx', index_col=0)
+#datum=d_time_series.index
+#wert = d_time_series['4. close']
+#wert2 = wert + 100
+#plot_stocks(datum, wert, wert2)
 

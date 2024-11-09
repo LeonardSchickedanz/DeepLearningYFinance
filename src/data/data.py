@@ -57,9 +57,9 @@ t_quarterly_income_without_date = t_quarterly_income[:, 1:]  # Alle Spalten auß
 t_combined = torch.cat((t_time_series, t_quarterly_income_without_date), dim=1)
 
 # Überprüfen der Shape
-print("Shape t_combined:", t_combined.shape)
+print(t_combined)
 
-def prepare_training_data(tensor, forecast_horizon=30):
+def prepare_training_data(tensor, forecast_horizon=1):
 
     #  scaler
     scaler = MinMaxScaler(feature_range=(0, 1))

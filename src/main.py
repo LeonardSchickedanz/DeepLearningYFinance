@@ -2,6 +2,7 @@ from data import data
 import model as model_class
 import torch
 import visualize as v
+import pandas as pd
 
 # training setup
 torch.manual_seed(41)
@@ -22,9 +23,10 @@ print("y_train:", y_train[0])
 
 # Training loop
 model.train()
-epochs = 1000
+epochs = 100
 losses = []
 test_losses = []
+prediction = []
 
 for i in range(epochs):
     # training
@@ -50,8 +52,11 @@ for i in range(epochs):
     loss.backward()
     optimizer.step()
 
-# plot losses
+# plot
 v.plot_losses(losses, test_losses)
+print(len(prediction))
+d_time_series = pd.read_excel('../data_xlsx/d_timeseries.xlsx', index_col=0)
+date = d_time_series['date']
+print(len(date))
 
-#plt.plot(y_pred)
-#plt.plot(y_train)
+#v.plot_stocks()
