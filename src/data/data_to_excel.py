@@ -11,23 +11,23 @@ API_KEY = os.getenv("API_KEY")
 
 def api_raw_data_to_excel():
     # create instances
-    api_d_fundamental_data = FundamentalData(key=API_KEY)  # load data_xlsx once then comment out
+    api_d_fundamental_data = FundamentalData(key=API_KEY)  # load data once then comment out
     api_d_time_series = TimeSeries(key=API_KEY, output_format='pandas')
 
     d_time_series, _ = api_d_time_series.get_daily(symbol='AAPL', outputsize='full')
     d_quarterly_income, _ = api_d_fundamental_data.get_income_statement_quarterly(symbol='AAPL')
 
-    d_quarterly_income.to_excel('../../data_xlsx/d_quarterly_income_raw.xlsx', index=True)
-    d_time_series.to_excel('../../data_xlsx/d_timeseries_raw.xlsx', index=True)
+    d_quarterly_income.to_excel('../data_xlsx/d_quarterly_income_raw.xlsx', index=True)
+    d_time_series.to_excel('../data_xlsx/d_timeseries_raw.xlsx', index=True)
 
 #api_raw_data_to_excel()
 
-d_quarterly_income = pd.read_excel('../../data_xlsx/d_quarterly_income_raw.xlsx', index_col=0)
-d_time_series = pd.read_excel('../../data_xlsx/d_timeseries_raw.xlsx', index_col=0) # 6288 days currently in there
+d_quarterly_income = pd.read_excel('../data_xlsx/d_quarterly_income_raw.xlsx', index_col=0)
+d_time_series = pd.read_excel('../data_xlsx/d_timeseries_raw.xlsx', index_col=0) # 6288 days currently in there
 r_time_series = d_time_series
 d_time_series = d_time_series.reset_index()
 
-# clean data_xlsx
+# clean data
 d_quarterly_income = d_quarterly_income.drop(columns='depreciation')
 d_quarterly_income = d_quarterly_income.drop(columns='reportedCurrency')
 d_quarterly_income.replace("None", np.nan)
@@ -82,5 +82,5 @@ common_dates = set(d_time_series.index).intersection(set(d_quarterly_income.inde
 min_date = max(d_time_series.index.min(), d_quarterly_income.index.min())
 max_date = min(d_time_series.index.max(), d_quarterly_income.index.max())
 
-d_quarterly_income.to_excel('../../data_xlsx/d_quarterly_income.xlsx', index=True)
-d_time_series.to_excel('../../data_xlsx/d_timeseries.xlsx', index=True)
+d_quarterly_income.to_excel('../data_xlsx/d_quarterly_income.xlsx', index=True)
+d_time_series.to_excel('../data_xlsx/d_timeseries.xlsx', index=True)

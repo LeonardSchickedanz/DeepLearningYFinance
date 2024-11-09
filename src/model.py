@@ -6,7 +6,7 @@ class Model(nn.Module):
     # Input Layers
     # Open, High, Low, Close, Volume x 30 days = 150 input neurons
 
-    def __init__(self, inputL=150, hiddenL1=150, hiddenL2=150, hiddenL3=150, outputL=7):
+    def __init__(self, inputL=29, hiddenL1=150, hiddenL2=150, hiddenL3=150, outputL=7):
         super().__init__()
         self.fullyConnected1 = nn.Linear(inputL, hiddenL1)  # connect layers
         self.fullyConnected2 = nn.Linear(hiddenL1, hiddenL2)

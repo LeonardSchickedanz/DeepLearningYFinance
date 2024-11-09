@@ -1,19 +1,19 @@
-from matplotlib import pyplot as plt
-from src.data_xlsx import data
+from data import data
 import model as model_class
 import torch
 import visualize as v
 
 # training setup
 torch.manual_seed(41)
-model = model_class.Model(inputL=data.f_input, hiddenL1=150, hiddenL2=150, hiddenL3=150, outputL=1)
+f_input=29
+model = model_class.Model(inputL=f_input, hiddenL1=150, hiddenL2=150, hiddenL3=150, outputL=1)
 criterion = torch.nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-# get the data_xlsx and scaler
+# get the data and scaler
 X_train, y_train, X_test, y_test, scaler = data.prepare_training_data(data.t_combined)
 
-# print data_xlsx shapes and sample values
+# print data shapes and sample values
 print("Training shapes:", X_train.shape, y_train.shape)
 print("Test shapes:", X_test.shape, y_test.shape)
 print("\nSample values:")

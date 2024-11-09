@@ -22,9 +22,9 @@ y_train = data.y_train
 
 model_instance.train() # set model to trainingsmode
 
-# Epochs (one run through all the training data_xlsx)
+# Epochs (one run through all the training data)
 epochs = 1000
-losses = [] # values showing relative difference between pred data_xlsx and real data_xlsx
+losses = [] # values showing relative difference between pred data and real data
 
 for i in range(epochs):
 
@@ -58,13 +58,13 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
-# Download historical data_xlsx
+# Download historical data
 d = yf.download("AAPL", period="10y")
 d = np.array(d)
 # transform y_pred to numpy
 y_pred_np = y_pred.detach().numpy()
 
-# plot historical data_xlsx
+# plot historical data
 plt.figure(figsize=(10, 5))
 plt.plot(d['Date'], d['Close'], label='Actual', color='blue')
 plt.plot(y_pred_np['Date'], y_pred_np, label = 'Predicted', color = 'red')
