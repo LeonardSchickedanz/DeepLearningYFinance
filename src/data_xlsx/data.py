@@ -1,6 +1,7 @@
 import torch
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
+import data_to_excel as d_to_ex
 
 # t_ = tensor
 # d_ = raw data_xlsx
@@ -24,16 +25,13 @@ top_100_sp500 = [
 ]
 
 # settings for seeing all data_xlsx in the terminal
-pd.set_option('display.max_columns', None)
-pd.set_option('display.max_rows', None)
-pd.set_option('display.width', None)
+#pd.set_option('display.max_columns', None)
+#pd.set_option('display.max_rows', None)
+#pd.set_option('display.width', None)
 
 # read data from excel
 d_time_series = pd.read_excel(r'C:\Users\LeonardSchickedanz\PycharmProjects\PredictStockPrice\data_xlsx\d_timeseries.xlsx', index_col=0)
 d_quarterly_income = pd.read_excel(r'C:\Users\LeonardSchickedanz\PycharmProjects\PredictStockPrice\data_xlsx\d_quarterly_income.xlsx', index_col=0)
-
-print(d_time_series.head())
-print(d_quarterly_income.head()) # Warum ist das anders?
 
 f_time_series = d_time_series.shape[1] # date, open, high, low, close, volume
 bs_time_series = d_time_series.shape[0] # 6
@@ -42,14 +40,21 @@ bs_quarterly_income = d_quarterly_income.shape[0] # 24
 
 f_input = f_time_series + f_quarterly_income # 30
 
-# tensors
-t_time_series = torch.tensor(d_time_series.values).float()
-t_time_series = t_time_series[-5937:]  # last 5850 days, Shape: (5937, 6)
+# Dann die Tensoren erstellen
+d_time_series_aligned = d_time_series[d_to_ex.min_date:d_to_ex.max_date]
+d_quarterly_income_aligned = d_quarterly_income[d_to_ex.min_date:d_to_ex.max_date]
 
-t_quarterly_income = torch.tensor(d_quarterly_income.values).float()
-t_quarterly_income = t_quarterly_income[-5937:] # Shape: (5937, 24)
+t_time_series = torch.tensor(d_time_series_aligned.values).float()
+t_quarterly_income = torch.tensor(d_quarterly_income_aligned.values).float()
 
-t_combined = torch.cat((t_time_series, t_quarterly_income), dim=1)  # Shape: (5937, 30)
+# Entferne das Datum aus einem der Tensoren (z.B. aus t_quarterly_income)
+t_quarterly_income_without_date = t_quarterly_income[:, 1:]  # Alle Spalten außer der ersten (Datum)
+
+# Kombiniere die Tensoren
+t_combined = torch.cat((t_time_series, t_quarterly_income_without_date), dim=1)
+
+# Überprüfen der Shape
+print("Shape t_combined:", t_combined.shape)
 
 def prepare_training_data(tensor, forecast_horizon=30):
 
@@ -75,19 +80,7 @@ def prepare_training_data(tensor, forecast_horizon=30):
     X_test = X[split_idx:]
     y_test = y[split_idx:]
 
-    # Print shapes and sample values for verification
-    print(f"Training samples: {X_train.shape}")
-    print(f"Test samples: {X_test.shape}")
-    print(f"\nSample scaled values:")
-    print(f"X_train first row: {X_train[0]}")
-    print(f"y_train first value: {y_train[0]}")
-
     return X_train, y_train, X_test, y_test, scaler
 
-# Plot erstellen
-#plt.figure(figsize=(10, 5))
-#plt.plot(d_time_series.index, d_time_series['4. close'], label="Schlusskurs")
-#print(t_combined[0])
-#plt.show()
 
 

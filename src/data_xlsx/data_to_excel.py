@@ -59,7 +59,7 @@ def stretch_data(data_frame, column_name, months, today):
         for i in range(0, len(upper_part)): # hänge alles vom oberen teil an new_df
             new_df.loc[len(new_df)] = upper_part.iloc[i]
 
-    while new_df.iloc[0, 0] < today:
+    while new_df.iloc[0, 0] < today: # add days between today and last quarter
         head_row = new_df[0:1].copy()
         head_row.iloc[0, 0] = head_row.iloc[0, 0] + pd.Timedelta(days=1)
         new_df = pd.concat([head_row, new_df], ignore_index=True)
@@ -77,6 +77,10 @@ d_quarterly_income['fiscalDateEnding'] = pd.to_datetime(d_quarterly_income['fisc
 d_quarterly_income['fiscalDateEnding'] = (d_quarterly_income['fiscalDateEnding'] - pd.Timestamp('1970-01-01')).dt.total_seconds()
 d_time_series['date'] = pd.to_datetime(d_time_series['date'])
 d_time_series['date'] = (d_time_series['date'] - pd.Timestamp('1970-01-01')).dt.total_seconds()
+
+common_dates = set(d_time_series.index).intersection(set(d_quarterly_income.index))
+min_date = max(d_time_series.index.min(), d_quarterly_income.index.min())
+max_date = min(d_time_series.index.max(), d_quarterly_income.index.max())
 
 d_quarterly_income.to_excel('../../data_xlsx/d_quarterly_income.xlsx', index=True)
 d_time_series.to_excel('../../data_xlsx/d_timeseries.xlsx', index=True)
