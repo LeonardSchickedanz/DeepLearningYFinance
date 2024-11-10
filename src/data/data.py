@@ -38,7 +38,7 @@ bs_time_series = d_time_series.shape[0] # 6
 f_quarterly_income = d_quarterly_income.shape[1]
 bs_quarterly_income = d_quarterly_income.shape[0] # 24
 
-f_input = f_time_series + f_quarterly_income # 30
+f_input = f_time_series + f_quarterly_income # 29
 
 # Dann die Tensoren erstellen
 min_date = max(d_time_series.index.min(), d_quarterly_income.index.min())
@@ -50,40 +50,50 @@ d_quarterly_income_aligned = d_quarterly_income[min_date:max_date]
 t_time_series = torch.tensor(d_time_series_aligned.values).float()
 t_quarterly_income = torch.tensor(d_quarterly_income_aligned.values).float()
 
-# Entferne das Datum aus einem der Tensoren (z.B. aus t_quarterly_income)
+# remove date from tensor
 t_quarterly_income_without_date = t_quarterly_income[:, 1:]  # Alle Spalten außer der ersten (Datum)
 
-# Kombiniere die Tensoren
+# combine tensors
 t_combined = torch.cat((t_time_series, t_quarterly_income_without_date), dim=1)
 
 # Überprüfen der Shape
-print(t_combined)
+print("t_combined:")
+print(t_combined.shape)
+
 
 def prepare_training_data(tensor, forecast_horizon=1):
+    # Erstelle zwei Scaler
+    full_scaler = MinMaxScaler(feature_range=(0, 1))
+    price_scaler = MinMaxScaler(feature_range=(0, 1))  # Nur für Schlusskurse
 
-    #  scaler
-    scaler = MinMaxScaler(feature_range=(0, 1))
+    # Konvertiere zu numpy
     data_np = tensor.numpy()
-    scaled_data = scaler.fit_transform(data_np)
+
+    # Skaliere alle Features
+    scaled_data = full_scaler.fit_transform(data_np)
+
+    # Skaliere die Schlusskurse separat (Spalte 3)
+    price_scaler.fit(data_np[:, 3:4])
+
     scaled_tensor = torch.FloatTensor(scaled_data)
 
     # total number of samples we can create
     n_samples = len(scaled_tensor) - forecast_horizon
 
     # Prepare X (features) and y (targets)
-    X = scaled_tensor[:n_samples]  # Input features for each day
+    x = scaled_tensor[:n_samples]  # Input features for each day
     y = scaled_tensor[forecast_horizon:, 3:4]  # select close price (4th column)
 
     # Calculate split point (80/20)
     split_idx = int(n_samples * 0.8)
 
     # Split into train and test
-    X_train = X[:split_idx]
+    x_train = x[:split_idx]
     y_train = y[:split_idx]
-    X_test = X[split_idx:]
+    x_test = x[split_idx:]
     y_test = y[split_idx:]
 
-    return X_train, y_train, X_test, y_test, scaler
+    return x_train, y_train, x_test, y_test, full_scaler, price_scaler
 
 
 
