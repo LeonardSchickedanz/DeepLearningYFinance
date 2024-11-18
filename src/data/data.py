@@ -10,6 +10,8 @@ from sklearn.preprocessing import MinMaxScaler
 
 #get_income_statement, get_balance_sheet, get_cash_flow
 
+FORECASTHORIZON = 30
+
 top_100_sp500 = [
     "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "BRK.B", "META", "TSLA", "V", "JNJ",
     "WMT", "PG", "XOM", "MA", "LLY", "UNH", "HD", "AVGO", "JPM", "CVX",
@@ -61,39 +63,40 @@ print("t_combined:")
 print(t_combined.shape)
 
 
-def prepare_training_data(tensor, forecast_horizon=1):
-    # Erstelle zwei Scaler
+def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, closed_price_index=4):
+    # Scaler für verschiedene Spalten
     full_scaler = MinMaxScaler(feature_range=(0, 1))
-    price_scaler = MinMaxScaler(feature_range=(0, 1))  # Nur für Schlusskurse
+    price_scaler = MinMaxScaler(feature_range=(0, 1))
 
-    # Konvertiere zu numpy
-    data_np = tensor.numpy()
+    # Skalieren der Spalten separat
+    scaled_tensor = tensor.clone().float()  # Konvertiere zu Float
 
-    # Skaliere alle Features
-    scaled_data = full_scaler.fit_transform(data_np)
+    # Skalierung mit übergebener Closed Price Index
+    scaled_tensor[:, 1:closed_price_index + 1] = torch.tensor(full_scaler.fit_transform(tensor[:, 1:closed_price_index + 1]))
+    scaled_tensor[:, -1] = torch.tensor(price_scaler.fit_transform(tensor[:, -1:].reshape(-1, 1))).flatten()
 
-    # Skaliere die Schlusskurse separat (Spalte 3)
-    price_scaler.fit(data_np[:, 3:4])
+    size_rows = scaled_tensor.size(0)
+    x = []
+    y = []
 
-    scaled_tensor = torch.FloatTensor(scaled_data)
+    for idx in range(size_rows - look_back_days - forecast_horizon):
+        x_block = scaled_tensor[idx:idx + look_back_days, :]
+        y_row = scaled_tensor[idx + look_back_days + forecast_horizon, closed_price_index]
 
-    # total number of samples we can create
-    n_samples = len(scaled_tensor) - forecast_horizon
+        x.append(x_block)
+        y.append(y_row)
 
-    # Prepare X (features) and y (targets)
-    x = scaled_tensor[:n_samples]  # Input features for each day
-    y = scaled_tensor[forecast_horizon:, 3:4]  # select close price (4th column)
+    # Konvertieren zu Tensoren
+    x = torch.stack(x)
+    y = torch.stack(y)
 
-    # Calculate split point (80/20)
-    split_idx = int(n_samples * 0.8)
+    # Train-Test-Split (80:20)
+    train_size = int(0.8 * len(x))
+    x_train, x_test = x[:train_size], x[train_size:]
+    y_train, y_test = y[:train_size], y[train_size:]
 
-    # Split into train and test
-    x_train = x[:split_idx]
-    y_train = y[:split_idx]
-    x_test = x[split_idx:]
-    y_test = y[split_idx:]
+    return x_train, x_test, y_train, y_test, full_scaler, price_scaler
 
-    return x_train, y_train, x_test, y_test, full_scaler, price_scaler
 
 
 

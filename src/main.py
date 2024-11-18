@@ -4,11 +4,12 @@ import model as model_class
 import torch
 import visualize as v
 import pandas as pd
+from src.data.data import FORECASTHORIZON
 
 # training setup
 torch.manual_seed(41)
 f_input=29
-model = model_class.Model(inputL=f_input, hiddenL1=150, hiddenL2=150, hiddenL3=150, outputL=1)
+model = model_class.Model(inputL=f_input, hiddenL1=150, hiddenL2=150, hiddenL3=150, outputL=FORECASTHORIZON)
 criterion = torch.nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
@@ -44,11 +45,11 @@ for i in range(epochs):
         test_losses.append(test_loss.item())
     model.train()
 
-    if i % 100 == 0:
-        print(f"Epoch: {i}")
-        print(f"Training loss: {loss.item():.4f}")
-        print(f"Test loss: {test_loss.item():.4f}")
-        print("\n")
+ #   if i % 100 == 0:
+ #       print(f"Epoch: {i}")
+ #       print(f"Training loss: {loss.item():.4f}")
+ #       print(f"Test loss: {test_loss.item():.4f}")
+ #       print("\n")
 
     optimizer.zero_grad()
     loss.backward()
@@ -67,4 +68,4 @@ print(f"länge ytest: {len(y_test)}")
 print(f"länge ypred: {len(prediction)}")
 print(f"länge ypred: {len(date)}")
 print(prediction.shape)
-v.plot_stocks2(date, y_test, prediction, scaler=price_scaler)
+v.plot_stocks(date, y_test, prediction, scaler=price_scaler)

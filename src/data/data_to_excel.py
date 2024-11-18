@@ -34,7 +34,6 @@ d_quarterly_income.replace("None", np.nan)
 d_quarterly_income = d_quarterly_income.fillna(0) # replaces ever None with 0
 d_quarterly_income['fiscalDateEnding'] = pd.to_datetime(d_quarterly_income['fiscalDateEnding'], errors='coerce')
 
-
 def stretch_data(data_frame, column_name, months, today):
     new_df = pd.DataFrame(columns=data_frame.columns)
     for i in range(months-1):
