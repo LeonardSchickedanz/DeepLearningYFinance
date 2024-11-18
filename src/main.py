@@ -21,8 +21,8 @@ x_train, y_train, x_test, y_test, full_scaler, price_scaler = data.prepare_train
 print("Training shapes:", x_train.shape, y_train.shape)
 print("Test shapes:", x_test.shape, y_test.shape)
 print("\nSample values:")
-print("X_train:", x_train[0])
-print("y_train:", y_train[0])
+print("x_train:", x_train.shape)
+print("y_train:", y_train.shape)
 
 # Training loop
 model.train()

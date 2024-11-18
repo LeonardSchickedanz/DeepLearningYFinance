@@ -63,7 +63,7 @@ print("t_combined:")
 print(t_combined.shape)
 
 
-def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, closed_price_index=4):
+def prepare_training_data(tensor, look_back_days=365, forecast_horizon=FORECASTHORIZON, closed_price_index=4):
     # Scaler für verschiedene Spalten
     full_scaler = MinMaxScaler(feature_range=(0, 1))
     price_scaler = MinMaxScaler(feature_range=(0, 1))
