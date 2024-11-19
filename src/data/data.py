@@ -58,11 +58,6 @@ t_quarterly_income_without_date = t_quarterly_income[:, 1:]  # Alle Spalten auß
 # combine tensors
 t_combined = torch.cat((t_time_series, t_quarterly_income_without_date), dim=1)
 
-# Überprüfen der Shape
-print("t_combined:")
-print(t_combined.shape)
-
-
 def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, price_column=4):
     size_rows = tensor.size(0)
     x = []

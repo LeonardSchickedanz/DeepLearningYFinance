@@ -9,7 +9,6 @@ from src.data.data import FORECASTHORIZON
 # training setup
 torch.manual_seed(41)
 f_input=29
-print(f"FORECASTHORIZON: {FORECASTHORIZON}")
 model = model_class.Model(inputL=f_input, hiddenL1=150, hiddenL2=150, hiddenL3=150, outputL=FORECASTHORIZON)
 criterion = torch.nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -17,13 +16,11 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 # get the data and scaler
 x_train, x_test, y_train, y_test, rest_scaler, price_scaler = data.prepare_training_data(data.t_combined)
 
-
-# print data shapes and sample values
-print("Training shapes:", x_train.shape, y_train.shape)
-print("Test shapes:", x_test.shape, y_test.shape)
-print("\nSample values:")
 print("x_train:", x_train.shape)
+print("x_test:", x_test.shape)
 print("y_train:", y_train.shape)
+print("y_test:", y_test.shape)
+print("\n")
 
 # Training loop
 model.train()
@@ -32,9 +29,9 @@ losses = []
 test_losses = []
 prediction = []
 
-for i in range(epochs):
+for i in range(x_train.size(1)):
     # training
-    y_pred = model(x_train) # 30
+    y_pred = model(x_train[:,i,:])
     print (f"y_pred: {y_pred.shape}")
     print(f"y_train: {y_train.shape}")
     loss = criterion(y_pred, y_train) # y_triang = 29
