@@ -50,16 +50,27 @@ for i in range(epochs):
     optimizer.step()
     prediction = y_pred_test
 
+# save data
+np_y_pred = y_pred.numpy()
+df = pd.DataFrame(np_y_pred)
+df.to_csv("../model_output/y_pred.csv", index=False)
+
+np_losses = losses.numpy()
+df = pd.DataFrame(np_losses)
+df.to_csv("../model_output/losses.csv", index=False)
+
+np_test_losses = test_losses.numpy()
+df = pd.DataFrame(np_test_losses)
+df.to_csv("../model_output/test_losses.csv", index=False)
+
 # plot
 v.plot_losses(losses, test_losses)
 d_time_series = pd.read_excel('../data_xlsx/d_timeseries.xlsx', index_col=0)
 d_time_series['date'] = d_time_series['date'].apply(lambda x: datetime.fromtimestamp(x).date()) # convert from unix timestamp to datetime
-date=d_time_series['date']
+date = d_time_series['date']
 date = date[:len(prediction)]
 
-print(f"länge ytest: {len(y_test)}")
-print(f"länge ypred: {len(prediction)}")
-print(f"länge ypred: {len(date)}")
+
 print(prediction.shape)
 date = date[-len(y_test):]  # Schneide die Daten auf die Länge von y_test zu
 v.plot_stocks(date, y_test, prediction, scaler=price_scaler)
