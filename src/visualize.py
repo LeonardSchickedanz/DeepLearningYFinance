@@ -38,20 +38,21 @@ import plotly.graph_objects as go
 
 
 def plot_stocks(dates, y_test, y_pred_test, scaler=None):
-
-    # Wenn ein Scaler übergeben wurde, transformiere die Daten zurück
     if scaler is not None:
-        # Reshape für inverse_transform
         y_test_transformed = scaler.inverse_transform(y_test.numpy().reshape(-1, 1))
         y_pred_transformed = scaler.inverse_transform(y_pred_test.numpy().reshape(-1, 1))
     else:
         y_test_transformed = y_test.cpu().numpy()
         y_pred_transformed = y_pred_test.cpu().numpy()
 
-    # Erstelle den Plot
+    # Stelle sicher, dass alle Arrays die gleiche Länge haben
+    min_len = min(len(dates), len(y_test_transformed), len(y_pred_transformed))
+    dates = dates[-min_len:]  # Nimm die letzten min_len Einträge
+    y_test_transformed = y_test_transformed[-min_len:]
+    y_pred_transformed = y_pred_transformed[-min_len:]
+
     fig = go.Figure()
 
-    # Hinzufügen der tatsächlichen Werte als Linie
     fig.add_trace(go.Scatter(
         x=dates,
         y=y_test_transformed.flatten(),
@@ -60,7 +61,6 @@ def plot_stocks(dates, y_test, y_pred_test, scaler=None):
         line=dict(color='blue')
     ))
 
-    # Hinzufügen der Vorhersagen als Linie
     fig.add_trace(go.Scatter(
         x=dates,
         y=y_pred_transformed.flatten(),
@@ -69,19 +69,15 @@ def plot_stocks(dates, y_test, y_pred_test, scaler=None):
         line=dict(color='red')
     ))
 
-    # Layout anpassen
     fig.update_layout(
         title='Aktienkursprognose: Vergleich tatsächliche Werte vs. Vorhersagen',
         xaxis_title='Datum',
         yaxis_title='Aktienkurs',
         template='plotly_white',
-        hovermode='x unified'  # Zeigt Werte beider Linien beim Hovern
+        hovermode='x unified'
     )
 
-    # Achsenoptionen und Gitterlinien anpassen
     fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
     fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
 
-    # Plot anzeigen
     fig.show()
-

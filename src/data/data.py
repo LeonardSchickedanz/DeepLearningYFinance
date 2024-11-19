@@ -59,6 +59,7 @@ t_quarterly_income_without_date = t_quarterly_income[:, 1:]  # Alle Spalten auß
 t_combined = torch.cat((t_time_series, t_quarterly_income_without_date), dim=1)
 
 def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, price_column=4):
+    tensor = tensor.flip(dims=[0])
     size_rows = tensor.size(0)
     x = []
     y = []
@@ -99,6 +100,8 @@ def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, price
     y_train = y[:split_index]
     x_test = x[split_index:]
     y_test = y[split_index:]
+    y_train = y_train.view(-1, 1)
+    y_test = y_test.view(-1, 1)
 
     return x_train, x_test, y_train, y_test, rest_scaler, price_scaler
 

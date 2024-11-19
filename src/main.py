@@ -9,7 +9,7 @@ from src.data.data import FORECASTHORIZON
 # training setup
 torch.manual_seed(41)
 f_input=29
-model = model_class.Model(inputL=f_input, hiddenL1=150, hiddenL2=150, hiddenL3=150, outputL=FORECASTHORIZON)
+model = model_class.LSTMModel(inputL=f_input, hiddenL1=150, hiddenL2=150, hiddenL3=150, outputL=1)
 criterion = torch.nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
@@ -24,19 +24,19 @@ print("\n")
 
 # Training loop
 model.train()
-epochs = 10000
+#epochs = x_train.size(1)
+epochs = 100
 losses = []
 test_losses = []
 prediction = []
 
-for i in range(x_train.size(1)):
+for i in range(epochs):
     # training
-    y_pred = model(x_train[:,i,:])
-    print (f"y_pred: {y_pred.shape}")
-    print(f"y_train: {y_train.shape}")
-    loss = criterion(y_pred, y_train) # y_triang = 29
-    losses.append(loss.item())
+    y_pred = model(x_train[:,:,:])
 
+    loss = criterion(y_pred, y_train)
+    losses.append(loss.item())
+    print(i)
     # validation
     model.eval()
     with torch.no_grad():
@@ -44,12 +44,6 @@ for i in range(x_train.size(1)):
         test_loss = criterion(y_pred_test, y_test)
         test_losses.append(test_loss.item())
     model.train()
-
- #   if i % 100 == 0:
- #       print(f"Epoch: {i}")
- #       print(f"Training loss: {loss.item():.4f}")
- #       print(f"Test loss: {test_loss.item():.4f}")
- #       print("\n")
 
     optimizer.zero_grad()
     loss.backward()
@@ -63,9 +57,9 @@ d_time_series['date'] = d_time_series['date'].apply(lambda x: datetime.fromtimes
 date=d_time_series['date']
 date = date[:len(prediction)]
 
-
 print(f"länge ytest: {len(y_test)}")
 print(f"länge ypred: {len(prediction)}")
 print(f"länge ypred: {len(date)}")
 print(prediction.shape)
+date = date[-len(y_test):]  # Schneide die Daten auf die Länge von y_test zu
 v.plot_stocks(date, y_test, prediction, scaler=price_scaler)
