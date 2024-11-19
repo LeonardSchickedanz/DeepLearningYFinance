@@ -63,39 +63,49 @@ print("t_combined:")
 print(t_combined.shape)
 
 
-def prepare_training_data(tensor, look_back_days=365, forecast_horizon=FORECASTHORIZON, closed_price_index=4):
-    # Scaler für verschiedene Spalten
-    full_scaler = MinMaxScaler(feature_range=(0, 1))
-    price_scaler = MinMaxScaler(feature_range=(0, 1))
-
-    # Skalieren der Spalten separat
-    scaled_tensor = tensor.clone().float()  # Konvertiere zu Float
-
-    # Skalierung mit übergebener Closed Price Index
-    scaled_tensor[:, 1:closed_price_index + 1] = torch.tensor(full_scaler.fit_transform(tensor[:, 1:closed_price_index + 1]))
-    scaled_tensor[:, -1] = torch.tensor(price_scaler.fit_transform(tensor[:, -1:].reshape(-1, 1))).flatten()
-
-    size_rows = scaled_tensor.size(0)
+def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, price_column=4):
+    size_rows = tensor.size(0)
     x = []
     y = []
 
+    price_scaler = MinMaxScaler(feature_range=(0, 1))
+    rest_scaler = MinMaxScaler(feature_range=(0, 1))
+
+    # Scale the priced column separately
+    priced_column_data = tensor[:, price_column].unsqueeze(1)
+    scaled_priced_column = torch.tensor(price_scaler.fit_transform(priced_column_data.numpy()), dtype=tensor.dtype)
+
+    # Scale the rest of the columns
+    rest_columns = torch.cat([tensor[:, :price_column], tensor[:, price_column+1:]], dim=1)
+    scaled_rest_columns = torch.tensor(rest_scaler.fit_transform(rest_columns.numpy()), dtype=tensor.dtype)
+
+    # Reconstruct the scaled tensor
+    scaled_tensor = torch.cat([scaled_rest_columns[:, :price_column],
+                                scaled_priced_column,
+                                scaled_rest_columns[:, price_column:]], dim=1)
+
     for idx in range(size_rows - look_back_days - forecast_horizon):
+        # X-Block: look_back_days Reihen
         x_block = scaled_tensor[idx:idx + look_back_days, :]
-        y_row = scaled_tensor[idx + look_back_days + forecast_horizon, closed_price_index]
 
+        # Y-Wert: Vorhersagewert nach look_back_days + forecast_horizon
+        y_value = scaled_tensor[idx + look_back_days + forecast_horizon, price_column]
         x.append(x_block)
-        y.append(y_row)
+        y.append(y_value)
 
-    # Konvertieren zu Tensoren
+    # Konvertieren zu Tensoren, falls noch nicht geschehen
+
     x = torch.stack(x)
     y = torch.stack(y)
 
-    # Train-Test-Split (80:20)
-    train_size = int(0.8 * len(x))
-    x_train, x_test = x[:train_size], x[train_size:]
-    y_train, y_test = y[:train_size], y[train_size:]
+    split_ratio = 0.8
+    split_index = int(len(x) * split_ratio)
+    x_train = x[:split_index]
+    y_train = y[:split_index]
+    x_test = x[split_index:]
+    y_test = y[split_index:]
 
-    return x_train, x_test, y_train, y_test, full_scaler, price_scaler
+    return x_train, x_test, y_train, y_test, rest_scaler, price_scaler
 
 
 
