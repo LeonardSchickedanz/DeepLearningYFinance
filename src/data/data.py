@@ -26,11 +26,6 @@ top_100_sp500 = [
     "MET", "VRTX", "EL", "AEP", "SLB", "TRV", "EOG", "SHW"
 ]
 
-# settings for seeing all data in the terminal
-#pd.set_option('display.max_columns', None)
-#pd.set_option('display.max_rows', None)
-#pd.set_option('display.width', None)
-
 # read data from excel
 d_time_series = pd.read_excel('../data_xlsx/d_timeseries.xlsx', index_col=0)
 d_quarterly_income = pd.read_excel('../data_xlsx/d_quarterly_income.xlsx', index_col=0)
@@ -59,7 +54,7 @@ t_quarterly_income_without_date = t_quarterly_income[:, 1:]  # Alle Spalten auß
 t_combined = torch.cat((t_time_series, t_quarterly_income_without_date), dim=1)
 
 def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, price_column=4):
-    tensor = tensor.flip(dims=[0])
+    tensor = torch.flip(tensor, [0])
     size_rows = tensor.size(0)
     x = []
     y = []
@@ -88,8 +83,6 @@ def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, price
         y_value = scaled_tensor[idx + look_back_days + forecast_horizon, price_column]
         x.append(x_block)
         y.append(y_value)
-
-    # Konvertieren zu Tensoren, falls noch nicht geschehen
 
     x = torch.stack(x)
     y = torch.stack(y)

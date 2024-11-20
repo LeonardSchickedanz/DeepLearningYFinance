@@ -1,7 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 class LSTMModel(nn.Module):
     def __init__(self, inputL=29, hiddenL1=150, hiddenL2=150, hiddenL3=150, outputL=1):
         super(LSTMModel, self).__init__()
