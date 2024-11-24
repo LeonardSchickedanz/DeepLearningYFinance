@@ -9,7 +9,7 @@ from src.data.data import FORECASTHORIZON
 # training setup
 torch.manual_seed(41)
 f_input=29
-model = model_class.LSTMModel(inputL=f_input, hiddenL1=150, hiddenL2=150, hiddenL3=150, outputL=1)
+model = model_class.LSTMModel(inputL = f_input, hiddenL1=100, hiddenL2=100, hiddenL3=100, outputL=1)
 criterion = torch.nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 x_train, x_test, y_train, y_test, rest_scaler, price_scaler = data.prepare_training_data(data.t_combined)
@@ -27,7 +27,7 @@ def run():
     # Training loop
     model.train()
     #epochs = x_train.size(1)
-    epochs = 250
+    epochs = 5
     losses = []
     test_losses = []
     prediction = []
@@ -54,24 +54,24 @@ def run():
 
     return prediction, losses, test_losses, y_test, price_scaler
 
-#prediction, losses, test_losses, y_test, price_scaler = run()
+prediction, losses, test_losses, y_test, price_scaler = run()
 
 # save data
-#np_y_pred = prediction.detach().numpy()
-#df = pd.DataFrame(np_y_pred)
-#df.to_csv("../model_output/prediction.csv", index=False)
+np_y_pred = prediction.detach().numpy()
+df = pd.DataFrame(np_y_pred)
+df.to_csv("../model_output/prediction.csv", index=False)
 
-#pd.DataFrame(losses).to_csv("../model_output/losses.csv", index=False)
-#pd.DataFrame(test_losses).to_csv("../model_output/test_losses.csv", index=False)
+pd.DataFrame(losses).to_csv("../model_output/losses.csv", index=False)
+pd.DataFrame(test_losses).to_csv("../model_output/test_losses.csv", index=False)
 
 # plot
-#v.plot_losses(losses, test_losses)
-#d_time_series = pd.read_excel('../data_xlsx/d_timeseries.xlsx', index_col=0)
-#d_time_series['date'] = d_time_series['date'].apply(lambda x: datetime.fromtimestamp(x).date()) # convert from unix timestamp to datetime
-#date = d_time_series['date']
-#date = date[:len(prediction)]
+v.plot_losses(losses, test_losses)
+d_time_series = pd.read_excel('../data_xlsx/d_timeseries.xlsx', index_col=0)
+d_time_series['date'] = d_time_series['date'].apply(lambda x: datetime.fromtimestamp(x).date()) # convert from unix timestamp to datetime
+date = d_time_series['date']
+date = date[:len(prediction)]
 
 
 #print(prediction.shape)
-#date = date[-len(y_test):]  # Schneide die Daten auf die Länge von y_test zu
-#v.plot_stocks(date, y_test, prediction, scaler=price_scaler)
+date = date[-len(y_test):]
+v.plot_stocks(date, y_test, prediction, scaler=price_scaler)

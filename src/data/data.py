@@ -26,9 +26,12 @@ top_100_sp500 = [
     "MET", "VRTX", "EL", "AEP", "SLB", "TRV", "EOG", "SHW"
 ]
 
+directory = '../data_xlsx/'
+#directory = '../../data_xlsx/'
+
 # read data from excel
-d_time_series = pd.read_excel('../../data_xlsx/d_timeseries.xlsx', index_col=0)
-d_quarterly_income = pd.read_excel('../../data_xlsx/d_quarterly_income.xlsx', index_col=0)
+d_time_series = pd.read_excel(f'{directory}d_timeseries.xlsx', index_col=0)
+d_quarterly_income = pd.read_excel(f'{directory}d_quarterly_income.xlsx', index_col=0)
 
 f_time_series = d_time_series.shape[1] # date, open, high, low, close, volume
 bs_time_series = d_time_series.shape[0] # 6
@@ -46,14 +49,13 @@ d_quarterly_income_aligned = d_quarterly_income[min_date:max_date]
 
 t_time_series = torch.tensor(d_time_series_aligned.values).float()
 t_quarterly_income = torch.tensor(d_quarterly_income_aligned.values).float()
-print(t_time_series)
-print(t_quarterly_income)
 
 # remove date from tensor
 t_quarterly_income_without_date = t_quarterly_income[:, 1:]  # Alle Spalten außer der ersten (Datum)
 
 # combine tensors
 t_combined = torch.cat((t_time_series, t_quarterly_income_without_date), dim=1)
+t_combined = t_combined.flip(0)
 
 def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, price_column=4):
     tensor = torch.flip(tensor, [0])

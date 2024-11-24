@@ -10,8 +10,8 @@ load_dotenv()
 API_KEY = os.getenv("API_KEY")
 
 # directory
-#directory = '../data_xlsx/'
-directory = '../../data_xlsx/'
+directory = '../data_xlsx/'
+#directory = '../../data_xlsx/'
 
 def api_raw_data_to_excel():
     # create instances
