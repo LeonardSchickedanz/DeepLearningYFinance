@@ -9,6 +9,10 @@ import os
 load_dotenv()
 API_KEY = os.getenv("API_KEY")
 
+# directory
+directory = '../data_xlsx/'
+#directory = '../../data_xlsx/'
+
 def api_raw_data_to_excel():
     # create instances
     api_d_fundamental_data = FundamentalData(key=API_KEY)  # load data once then comment out
@@ -17,13 +21,13 @@ def api_raw_data_to_excel():
     d_time_series, _ = api_d_time_series.get_daily(symbol='AAPL', outputsize='full')
     d_quarterly_income, _ = api_d_fundamental_data.get_income_statement_quarterly(symbol='AAPL')
 
-    d_quarterly_income.to_excel('../data_xlsx/d_quarterly_income_raw.xlsx', index=True)
-    d_time_series.to_excel('../data_xlsx/d_timeseries_raw.xlsx', index=True)
+    d_quarterly_income.to_excel(f'{directory}d_quarterly_income_raw.xlsx', index=True)
+    d_time_series.to_excel(f'{directory}d_timeseries_raw.xlsx', index=True)
 
 #api_raw_data_to_excel()
 
-d_quarterly_income = pd.read_excel('../data_xlsx/d_quarterly_income_raw.xlsx', index_col=0)
-d_time_series = pd.read_excel('../data_xlsx/d_timeseries_raw.xlsx', index_col=0) # 6288 days currently in there
+d_quarterly_income = pd.read_excel(f'{directory}d_quarterly_income_raw.xlsx', index_col=0)
+d_time_series = pd.read_excel(f'{directory}d_timeseries_raw.xlsx', index_col=0) # 6288 days currently in there
 r_time_series = d_time_series
 d_time_series = d_time_series.reset_index()
 
@@ -34,42 +38,14 @@ d_quarterly_income.replace("None", np.nan)
 d_quarterly_income = d_quarterly_income.fillna(0) # replaces ever None with 0
 d_quarterly_income['fiscalDateEnding'] = pd.to_datetime(d_quarterly_income['fiscalDateEnding'], errors='coerce')
 
-def stretch_data(data_frame, column_name, months, today):
-    new_df = pd.DataFrame(columns=data_frame.columns)
-    for i in range(months-1):
-        row1 = data_frame.iloc[i]
-        row2 = data_frame.iloc[i+1]
+d_quarterly_income.set_index('fiscalDateEnding', inplace=True)
 
-        upper_date = row1.iloc[0]
-        lower_date = row2.iloc[0]
-
-        upper_part = data_frame.iloc[:i]  # Teil bis idx2 (ohne idx2)
-        #lower_part = data_frame.iloc[i:]  # Teil ab idx2
-
-        current_date = lower_date #+ pd.Timedelta(days=1)
-        row_to_use = row2.copy()
-
-        while current_date < upper_date:
-            row_to_use[column_name]=current_date
-            upper_part.loc[len(upper_part)] = row_to_use # häng an den oberen teil unten neues dran
-            current_date += pd.Timedelta(days=1)
-
-        upper_part = upper_part.iloc[::-1].reset_index(drop=True)
-        for i in range(0, len(upper_part)): # hänge alles vom oberen teil an new_df
-            new_df.loc[len(new_df)] = upper_part.iloc[i]
-
-    while new_df.iloc[0, 0] < today: # add days between today and last quarter
-        head_row = new_df[0:1].copy()
-        head_row.iloc[0, 0] = head_row.iloc[0, 0] + pd.Timedelta(days=1)
-        new_df = pd.concat([head_row, new_df], ignore_index=True)
-
-    new_df = new_df.drop_duplicates(subset=['fiscalDateEnding']).sort_values(by='fiscalDateEnding').reset_index(drop=True)
-    return new_df
-
-counter_months = d_quarterly_income.iloc[:, 0].dt.to_period('M').nunique()
-d_quarterly_income=stretch_data(d_quarterly_income, column_name = 'fiscalDateEnding', months=counter_months, today=d_time_series.iloc[0][0])
+d_quarterly_income = d_quarterly_income.resample('D').ffill()
+d_quarterly_income.reset_index(inplace=True)
 
 d_quarterly_income = d_quarterly_income.iloc[::-1].reset_index(drop=True)
+
+d_quarterly_income.to_excel(f'{directory}d_quarterly_income_TEST.xlsx', index=True)
 
 # set unix time stamps
 d_quarterly_income['fiscalDateEnding'] = pd.to_datetime(d_quarterly_income['fiscalDateEnding'])
@@ -81,5 +57,5 @@ common_dates = set(d_time_series.index).intersection(set(d_quarterly_income.inde
 min_date = max(d_time_series.index.min(), d_quarterly_income.index.min())
 max_date = min(d_time_series.index.max(), d_quarterly_income.index.max())
 
-d_quarterly_income.to_excel('../data_xlsx/d_quarterly_income.xlsx', index=True)
-d_time_series.to_excel('../data_xlsx/d_timeseries.xlsx', index=True)
+d_quarterly_income.to_excel(f'{directory}d_quarterly_income.xlsx', index=True)
+d_time_series.to_excel(f'{directory}d_timeseries.xlsx', index=True)
