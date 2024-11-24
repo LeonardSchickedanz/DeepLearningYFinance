@@ -82,10 +82,20 @@ if last_date_time_series != last_date_quarterly_income:
 
 
 # set unix time stamps
-#d_quarterly_income['fiscalDateEnding'] = pd.to_datetime(d_quarterly_income['fiscalDateEnding'])
-#d_quarterly_income['fiscalDateEnding'] = (d_quarterly_income['fiscalDateEnding'] - pd.Timestamp('1970-01-01')).dt.total_seconds()
-#d_time_series['date'] = pd.to_datetime(d_time_series['date'])
-#d_time_series['date'] = (d_time_series['date'] - pd.Timestamp('1970-01-01')).dt.total_seconds()
+d_quarterly_income['fiscalDateEnding'] = pd.to_datetime(d_quarterly_income['fiscalDateEnding'])
+d_quarterly_income['fiscalDateEnding'] = (d_quarterly_income['fiscalDateEnding'] - pd.Timestamp('1970-01-01')).dt.total_seconds()
+d_time_series['date'] = pd.to_datetime(d_time_series['date'])
+d_time_series['date'] = (d_time_series['date'] - pd.Timestamp('1970-01-01')).dt.total_seconds()
+
+assert len(d_time_series) == len(d_quarterly_income)
+
+# Iteriere durch beide DataFrames und vergleiche die Werte zeilenweise
+for idx in range(len(d_time_series)):
+    time_series_date = d_time_series.iloc[idx]['date']
+    quarterly_income_date = d_quarterly_income.iloc[idx]['fiscalDateEnding']
+
+    # Überprüfe, ob die beiden Werte übereinstimmen
+    assert time_series_date == quarterly_income_date, f"Unterschied gefunden: d_time_series['date'] = {time_series_date}, d_quarterly_income['fiscalDateEnding'] = {quarterly_income_date} (Index: {idx})"
 
 d_quarterly_income.to_excel(f'{directory}d_quarterly_income.xlsx', index=True)
 d_time_series.to_excel(f'{directory}d_timeseries.xlsx', index=True)
