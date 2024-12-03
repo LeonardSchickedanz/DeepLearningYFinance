@@ -1,4 +1,7 @@
 from datetime import datetime
+
+import numpy as np
+
 from data import data
 import model as model_class
 import torch
@@ -27,7 +30,7 @@ def run():
     # Training loop
     model.train()
     #epochs = x_train.size(1)
-    epochs = 5
+    epochs = 10
     losses = []
     test_losses = []
     prediction = []
@@ -52,6 +55,7 @@ def run():
         optimizer.step()
         prediction = y_pred_test
 
+    prediction = np.vstack(prediction)
     return prediction, losses, test_losses, y_test, price_scaler
 
 prediction, losses, test_losses, y_test, price_scaler = run()
