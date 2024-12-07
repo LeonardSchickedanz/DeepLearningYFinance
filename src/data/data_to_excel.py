@@ -80,7 +80,7 @@ def economic_indicators_to_excel():
             "value": values
         })
 
-        df.to_excel(f'{directory_raw}{economic_indicators[idx1]}.xlsx', index=True)
+        df.to_excel(f'{directory_raw}{economic_indicators[idx1]}_raw.xlsx', index=True)
 
 #economic_indicators_to_excel()
 #api_raw_data_to_excel()
@@ -109,9 +109,7 @@ max_date_time_series = d_time_series['date'].max()
 d_time_series.set_index('date', inplace=True)
 d_time_series.sort_index(inplace=True)
 
-# Erstelle einen vollständigen Datumsbereich von min bis max Datum
 date_range = pd.date_range(start=d_time_series.index.min(), end=d_time_series.index.max(), freq='D')
-
 d_time_series = d_time_series.reindex(date_range)
 
 # forward fill
