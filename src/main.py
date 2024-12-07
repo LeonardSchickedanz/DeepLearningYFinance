@@ -35,17 +35,24 @@ def run():
     test_losses = []
     prediction = []
 
-    for i in range(epochs):
+    for epoch in range(epochs):
+        # Initialisierung des Hidden- und Cell-States für Training
+        hidden_state = torch.zeros(1, x_train.size(0), model.lstm.hidden_size).to(x_train.device)
+        cell_state = torch.zeros(1, x_train.size(0), model.lstm.hidden_size).to(x_train.device)
+
         # training
-        y_pred = model(x_train[:,:,:])
+        y_pred, (hidden_state, cell_state) = model(x_train[:,:,:], hidden_state, cell_state)
 
         loss = criterion(y_pred, y_train)
         losses.append(loss.item())
-        print(i)
+        print(epoch)
         # validation
         model.eval()
         with torch.no_grad():
-            y_pred_test = model(x_test)
+            hidden_state_val = torch.zeros(1, x_test.size(0), model.lstm.hidden_size).to(x_test.device)
+            cell_state_val = torch.zeros(1, x_test.size(0), model.lstm.hidden_size).to(x_test.device)
+
+            y_pred_test = model(x_test, hidden_state_val, cell_state_val)
             test_loss = criterion(y_pred_test, y_test)
             test_losses.append(test_loss.item())
         model.train()

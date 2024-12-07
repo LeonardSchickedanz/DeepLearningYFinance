@@ -18,9 +18,10 @@ API_KEY = os.getenv("API_KEY")
 directory_raw = '../../data/raw/'
 directory_processed = '../../data/processed/'
 
+# RECEIVE DATA
+
 def api_raw_data_to_excel():
 
-    # create instances
     api_d_fundamental_data = FundamentalData(key=API_KEY, output_format='pandas')
     api_d_time_series = TimeSeries(key=API_KEY, output_format='pandas')
 
@@ -82,13 +83,12 @@ def economic_indicators_to_excel():
         df.to_excel(f'{directory_raw}{economic_indicators[idx1]}.xlsx', index=True)
 
 #economic_indicators_to_excel()
-
 #api_raw_data_to_excel()
 
 d_quarterly_income = pd.read_excel(f'{directory_raw}d_quarterly_income_raw.xlsx', index_col=0)
 d_time_series = pd.read_excel(f'{directory_raw}d_timeseries_raw.xlsx', index_col=0)
 
-# clean data
+# CLEAN DATA
 d_time_series = d_time_series.reset_index()
 d_quarterly_income = d_quarterly_income.drop(columns='depreciation')
 d_quarterly_income = d_quarterly_income.drop(columns='reportedCurrency')
@@ -136,7 +136,6 @@ if last_date_time_series != last_date_quarterly_income:
     cut_off_date = max(last_date_quarterly_income, last_date_time_series)
     d_time_series = d_time_series[d_time_series['date'] >= cut_off_date]
     d_quarterly_income = d_quarterly_income[d_quarterly_income['fiscalDateEnding'] >= cut_off_date]
-
 
 # set unix time stamps
 d_quarterly_income['fiscalDateEnding'] = pd.to_datetime(d_quarterly_income['fiscalDateEnding'])
