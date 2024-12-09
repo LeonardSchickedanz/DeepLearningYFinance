@@ -46,7 +46,7 @@ def economic_indicators_to_excel():
         'DURABLES',
         'UNEMPLOYMENT',
         'NONFARM_PAYROLL'
-        ]
+    ]
 
     economic_indicators = [
         'd_real_gdp',
@@ -59,7 +59,9 @@ def economic_indicators_to_excel():
         'd_durables',
         'd_unemployment',
         'd_nonfarm_payroll'
-        ]
+    ]
+
+    dataframes = []
 
     for idx1, u in enumerate(url_list):
         url =  f'{main_url}{u}{api_key_url}'
@@ -79,14 +81,27 @@ def economic_indicators_to_excel():
             "date": dates,
             "value": values
         })
+        dataframes.append(df)
 
         df.to_excel(f'{directory_raw}{economic_indicators[idx1]}_raw.xlsx', index=True)
+
+    return dataframes
 
 #economic_indicators_to_excel()
 #api_raw_data_to_excel()
 
+d_cpi = pd.read_excel(f'{directory_raw}d_cpi_raw.xlsx', index_col=0)
+d_durables = pd.read_excel(f'{directory_raw}d_durables_raw.xlsx', index_col=0)
+d_federal_funds_rate = pd.read_excel(f'{directory_raw}d_federal_funds_rate_raw.xlsx', index_col=0)
+d_inflation = pd.read_excel(f'{directory_raw}d_inflation_raw.xlsx', index_col=0)
+d_nonfarm_payroll = pd.read_excel(f'{directory_raw}d_nonfarm_payroll_raw.xlsx', index_col=0)
 d_quarterly_income = pd.read_excel(f'{directory_raw}d_quarterly_income_raw.xlsx', index_col=0)
+d_real_gdp_per_capita = pd.read_excel(f'{directory_raw}d_real_gdp_per_capita_raw.xlsx', index_col=0)
+d_real_gdp = pd.read_excel(f'{directory_raw}d_real_gdp_raw.xlsx', index_col=0)
+d_retail_sales = pd.read_excel(f'{directory_raw}d_retail_sales_raw.xlsx', index_col=0)
 d_time_series = pd.read_excel(f'{directory_raw}d_timeseries_raw.xlsx', index_col=0)
+d_treasury_yield = pd.read_excel(f'{directory_raw}d_treasury_yield_raw.xlsx', index_col=0)
+d_unemployment = pd.read_excel(f'{directory_raw}d_unemployment_raw.xlsx', index_col=0)
 
 # CLEAN DATA
 d_time_series = d_time_series.reset_index()
@@ -94,18 +109,19 @@ d_quarterly_income = d_quarterly_income.drop(columns='depreciation')
 d_quarterly_income = d_quarterly_income.drop(columns='reportedCurrency')
 d_quarterly_income.replace("None", np.nan)
 d_quarterly_income = d_quarterly_income.fillna(0) # replaces every None with 0
-d_quarterly_income['fiscalDateEnding'] = pd.to_datetime(d_quarterly_income['fiscalDateEnding'], errors='coerce')
+d_quarterly_income.rename(columns={'fiscalDateEnding': 'date'}, inplace=True)
+d_quarterly_income['date'] = pd.to_datetime(d_quarterly_income['fiscalDateEnding'], errors='coerce')
 
+#-----------------------------------------------------------------------------------------------------------------------
 # stretch quarterly income
-d_quarterly_income.set_index('fiscalDateEnding', inplace=True)
+d_quarterly_income.set_index('date', inplace=True)
 d_quarterly_income = d_quarterly_income.resample('D').ffill()
 d_quarterly_income.reset_index(inplace=True)
 
-# invert
 d_quarterly_income = d_quarterly_income.iloc[::-1].reset_index(drop=True)
 
+# timeseries
 max_date_time_series = d_time_series['date'].max()
-
 d_time_series.set_index('date', inplace=True)
 d_time_series.sort_index(inplace=True)
 
@@ -114,14 +130,17 @@ d_time_series = d_time_series.reindex(date_range)
 
 # forward fill
 d_time_series = d_time_series.ffill()
-current_date = d_quarterly_income['fiscalDateEnding'].max()
+current_date = d_quarterly_income['date'].max()
+
+# general
+#MAX_DATE = max()
 
 first_row = d_quarterly_income.iloc[0].copy()
 
 while current_date < max_date_time_series:
     current_date += pd.Timedelta(days=1)
     new_row = first_row.copy()
-    new_row['fiscalDateEnding'] = current_date
+    new_row['date'] = current_date
     # Füge die neue Zeile oben an den DataFrame an
     d_quarterly_income = pd.concat([pd.DataFrame([new_row]), d_quarterly_income], ignore_index=True)
 
@@ -133,11 +152,13 @@ last_date_quarterly_income = d_quarterly_income.iloc[len(d_quarterly_income)-1, 
 if last_date_time_series != last_date_quarterly_income:
     cut_off_date = max(last_date_quarterly_income, last_date_time_series)
     d_time_series = d_time_series[d_time_series['date'] >= cut_off_date]
-    d_quarterly_income = d_quarterly_income[d_quarterly_income['fiscalDateEnding'] >= cut_off_date]
+    d_quarterly_income = d_quarterly_income[d_quarterly_income['date'] >= cut_off_date]
 
+
+#-----------------------------------------------------------------------------------------------------------------------
 # set unix time stamps
-d_quarterly_income['fiscalDateEnding'] = pd.to_datetime(d_quarterly_income['fiscalDateEnding'])
-d_quarterly_income['fiscalDateEnding'] = (d_quarterly_income['fiscalDateEnding'] - pd.Timestamp('1970-01-01')).dt.total_seconds()
+d_quarterly_income['date'] = pd.to_datetime(d_quarterly_income['date'])
+d_quarterly_income['date'] = (d_quarterly_income['date'] - pd.Timestamp('1970-01-01')).dt.total_seconds()
 d_time_series['date'] = pd.to_datetime(d_time_series['date'])
 d_time_series['date'] = (d_time_series['date'] - pd.Timestamp('1970-01-01')).dt.total_seconds()
 
@@ -146,8 +167,8 @@ assert len(d_time_series) == len(d_quarterly_income)
 # check data
 for idx in range(len(d_time_series)):
     time_series_date = d_time_series.iloc[idx]['date']
-    quarterly_income_date = d_quarterly_income.iloc[idx]['fiscalDateEnding']
-    assert time_series_date == quarterly_income_date, f"DIFFERENCE FOUND d_time_series['date'] = {time_series_date}, d_quarterly_income['fiscalDateEnding'] = {quarterly_income_date} (Index: {idx})"
+    quarterly_income_date = d_quarterly_income.iloc[idx]['date']
+    assert time_series_date == quarterly_income_date, f"DIFFERENCE FOUND d_time_series['date'] = {time_series_date}, d_quarterly_income['date'] = {quarterly_income_date} (Index: {idx})"
 
 d_quarterly_income.to_excel(f'{directory_processed}d_quarterly_income.xlsx', index=True)
 d_time_series.to_excel(f'{directory_processed}d_timeseries.xlsx', index=True)
