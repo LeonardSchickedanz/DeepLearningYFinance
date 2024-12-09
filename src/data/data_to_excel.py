@@ -90,20 +90,25 @@ def economic_indicators_to_excel():
 #economic_indicators_to_excel()
 #api_raw_data_to_excel()
 
-d_cpi = pd.read_excel(f'{directory_raw}d_cpi_raw.xlsx', index_col=0)
-d_durables = pd.read_excel(f'{directory_raw}d_durables_raw.xlsx', index_col=0)
-d_federal_funds_rate = pd.read_excel(f'{directory_raw}d_federal_funds_rate_raw.xlsx', index_col=0)
-d_inflation = pd.read_excel(f'{directory_raw}d_inflation_raw.xlsx', index_col=0)
-d_nonfarm_payroll = pd.read_excel(f'{directory_raw}d_nonfarm_payroll_raw.xlsx', index_col=0)
-d_quarterly_income = pd.read_excel(f'{directory_raw}d_quarterly_income_raw.xlsx', index_col=0)
-d_real_gdp_per_capita = pd.read_excel(f'{directory_raw}d_real_gdp_per_capita_raw.xlsx', index_col=0)
-d_real_gdp = pd.read_excel(f'{directory_raw}d_real_gdp_raw.xlsx', index_col=0)
-d_retail_sales = pd.read_excel(f'{directory_raw}d_retail_sales_raw.xlsx', index_col=0)
-d_time_series = pd.read_excel(f'{directory_raw}d_timeseries_raw.xlsx', index_col=0)
-d_treasury_yield = pd.read_excel(f'{directory_raw}d_treasury_yield_raw.xlsx', index_col=0)
-d_unemployment = pd.read_excel(f'{directory_raw}d_unemployment_raw.xlsx', index_col=0)
+DATA_LIST = [
+    pd.read_excel(f'{directory_raw}d_cpi_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}d_durables_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}d_federal_funds_rate_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}d_inflation_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}d_nonfarm_payroll_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}d_quarterly_income_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}d_real_gdp_per_capita_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}d_real_gdp_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}d_retail_sales_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}d_timeseries_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}d_treasury_yield_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}d_unemployment_raw.xlsx', index_col=0)
+]
 
 # CLEAN DATA
+d_quarterly_income = DATA_LIST[5]
+d_time_series = DATA_LIST[9]
+
 d_time_series = d_time_series.reset_index()
 d_quarterly_income = d_quarterly_income.drop(columns='depreciation')
 d_quarterly_income = d_quarterly_income.drop(columns='reportedCurrency')
@@ -112,51 +117,37 @@ d_quarterly_income = d_quarterly_income.fillna(0) # replaces every None with 0
 d_quarterly_income.rename(columns={'fiscalDateEnding': 'date'}, inplace=True)
 d_quarterly_income['date'] = pd.to_datetime(d_quarterly_income['fiscalDateEnding'], errors='coerce')
 
-#-----------------------------------------------------------------------------------------------------------------------
-# stretch quarterly income
-d_quarterly_income.set_index('date', inplace=True)
-d_quarterly_income = d_quarterly_income.resample('D').ffill()
-d_quarterly_income.reset_index(inplace=True)
+# STRETCH DATA
+def stretch_data(data, min_date, max_date, date_column):
+    data[date_column] = pd.to_datetime(data[date_column])
+    data.set_index(date_column, inplace=True)
+    data.sort_index(inplace=True)
+    data = data.resample('D').ffill()
+    date_range = pd.date_range(start=min_date, end=max_date, freq='D')
+    data = data.reindex(date_range)
+    data = data.reset_index(names=['date'])
+    data = data.iloc[::-1].reset_index(drop=True)
 
-d_quarterly_income = d_quarterly_income.iloc[::-1].reset_index(drop=True)
+    return data
 
-# timeseries
-max_date_time_series = d_time_series['date'].max()
-d_time_series.set_index('date', inplace=True)
-d_time_series.sort_index(inplace=True)
+min_date = max(DATA_LIST[0]['date'],DATA_LIST[1]['date'],
+               DATA_LIST[2]['date'],DATA_LIST[3]['date'],
+               DATA_LIST[4]['date'],DATA_LIST[5]['date'],
+               DATA_LIST[6]['date'],DATA_LIST[7]['date'],
+               DATA_LIST[8]['date'],DATA_LIST[9]['date'],
+               DATA_LIST[10]['date'],DATA_LIST[11]['date'])
 
-date_range = pd.date_range(start=d_time_series.index.min(), end=d_time_series.index.max(), freq='D')
-d_time_series = d_time_series.reindex(date_range)
+max_date = min(DATA_LIST[0]['date'],DATA_LIST[1]['date'],
+               DATA_LIST[2]['date'],DATA_LIST[3]['date'],
+               DATA_LIST[4]['date'],DATA_LIST[5]['date'],
+               DATA_LIST[6]['date'],DATA_LIST[7]['date'],
+               DATA_LIST[8]['date'],DATA_LIST[9]['date'],
+               DATA_LIST[10]['date'],DATA_LIST[11]['date'])
 
-# forward fill
-d_time_series = d_time_series.ffill()
-current_date = d_quarterly_income['date'].max()
+for idx, df in enumerate(DATA_LIST):
+    DATA_LIST[idx] = stretch_data(data=df,min_date=min_date ,max_date=max_date , date_column=0)
 
-# general
-#MAX_DATE = max()
-
-first_row = d_quarterly_income.iloc[0].copy()
-
-while current_date < max_date_time_series:
-    current_date += pd.Timedelta(days=1)
-    new_row = first_row.copy()
-    new_row['date'] = current_date
-    # Füge die neue Zeile oben an den DataFrame an
-    d_quarterly_income = pd.concat([pd.DataFrame([new_row]), d_quarterly_income], ignore_index=True)
-
-d_time_series = d_time_series.iloc[::-1].reset_index(drop=False)
-d_time_series = d_time_series.rename(columns={'index': 'date'})
-
-last_date_time_series = d_time_series.iloc[len(d_time_series)-1, 0]
-last_date_quarterly_income = d_quarterly_income.iloc[len(d_quarterly_income)-1, 0]
-if last_date_time_series != last_date_quarterly_income:
-    cut_off_date = max(last_date_quarterly_income, last_date_time_series)
-    d_time_series = d_time_series[d_time_series['date'] >= cut_off_date]
-    d_quarterly_income = d_quarterly_income[d_quarterly_income['date'] >= cut_off_date]
-
-
-#-----------------------------------------------------------------------------------------------------------------------
-# set unix time stamps
+# UNIX TIME STAMPS
 d_quarterly_income['date'] = pd.to_datetime(d_quarterly_income['date'])
 d_quarterly_income['date'] = (d_quarterly_income['date'] - pd.Timestamp('1970-01-01')).dt.total_seconds()
 d_time_series['date'] = pd.to_datetime(d_time_series['date'])
