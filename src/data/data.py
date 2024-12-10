@@ -1,18 +1,13 @@
-import torch
 import pandas as pd
+import torch
 from sklearn.preprocessing import MinMaxScaler
-
+from src.data import data_to_excel
 
 # t_ = tensor
 # d_ = raw data
 # f_ = features
-# bs_ = batch size
 
-#get_income_statement, get_balance_sheet, get_cash_flow
-
-FORECASTHORIZON = 30
-
-top_100_sp500 = [
+top_100_sp500 = (
     "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "BRK.B", "META", "TSLA", "V", "JNJ",
     "WMT", "PG", "XOM", "MA", "LLY", "UNH", "HD", "AVGO", "JPM", "CVX",
     "MRK", "ABBV", "PEP", "KO", "COST", "ORCL", "MS", "MCD", "TMO", "CSCO",
@@ -24,38 +19,37 @@ top_100_sp500 = [
     "EQIX", "DUK", "SO", "MMC", "USB", "C", "REGN", "TGT", "BDX", "APD",
     "ITW", "ADI", "HUM", "ETN", "NSC", "PNC", "WM", "AON", "ADSK", "MU",
     "MET", "VRTX", "EL", "AEP", "SLB", "TRV", "EOG", "SHW"
-]
+    )
 
 directory = '../data_xlsx/'
 #directory = '../../data_xlsx/'
+#directory_processed = '../../data/processed/'
+directory_processed = '../data/processed/'
 
-# read data from excel
-d_time_series = pd.read_excel(f'{directory}d_timeseries.xlsx', index_col=0)
-d_quarterly_income = pd.read_excel(f'{directory}d_quarterly_income.xlsx', index_col=0)
+DATA_LIST = (
+    pd.read_excel(f'{directory_processed}d_real_gdp.xlsx', index_col=0),
+    pd.read_excel(f'{directory_processed}d_real_gdp_per_capita.xlsx', index_col=0),
+    pd.read_excel(f'{directory_processed}d_federal_funds_rate.xlsx', index_col=0),
+    pd.read_excel(f'{directory_processed}d_cpi.xlsx', index_col=0),
+    pd.read_excel(f'{directory_processed}d_inflation.xlsx', index_col=0),
+    pd.read_excel(f'{directory_processed}d_retail_sales.xlsx', index_col=0),
+    pd.read_excel(f'{directory_processed}d_durables.xlsx', index_col=0),
+    pd.read_excel(f'{directory_processed}d_unemployment.xlsx', index_col=0),
+    pd.read_excel(f'{directory_processed}d_nonfarm_payroll.xlsx', index_col=0),
+    pd.read_excel(f'{directory_processed}d_quarterly_income.xlsx', index_col=0),
+    pd.read_excel(f'{directory_processed}d_timeseries.xlsx', index_col=0),
+    )
 
-f_time_series = d_time_series.shape[1] # date, open, high, low, close, volume
-bs_time_series = d_time_series.shape[0] # 6
-f_quarterly_income = d_quarterly_income.shape[1]
-bs_quarterly_income = d_quarterly_income.shape[0] # 24
+def merge_dataframes(dataframes):
+    merged_df = pd.concat(dataframes, axis=1)
+    merged_df = merged_df.loc[:, ~merged_df.columns.duplicated()]
+    merged_df = merged_df.drop(columns='value')
+    return merged_df
 
-f_input = f_time_series + f_quarterly_income # 29
+d_combined = merge_dataframes(DATA_LIST)
+d_combined.to_excel(f'{directory_processed}d_combined.xlsx')
 
-# Dann die Tensoren erstellen
-min_date = max(d_time_series.index.min(), d_quarterly_income.index.min())
-max_date = min(d_time_series.index.max(), d_quarterly_income.index.max())
-
-d_time_series_aligned = d_time_series[min_date:max_date]
-d_quarterly_income_aligned = d_quarterly_income[min_date:max_date]
-
-t_time_series = torch.tensor(d_time_series_aligned.values).float()
-t_quarterly_income = torch.tensor(d_quarterly_income_aligned.values).float()
-
-# remove date from tensor
-t_quarterly_income_without_date = t_quarterly_income[:, 1:]  # Alle Spalten außer der ersten (Datum)
-
-# combine tensors
-t_combined = torch.cat((t_time_series, t_quarterly_income_without_date), dim=1)
-t_combined = t_combined.flip(0)
+T_COMBINED = torch.tensor(d_combined.values).float()
 
 def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, price_column=4):
     tensor = torch.flip(tensor, [0])

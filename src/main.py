@@ -1,25 +1,20 @@
 from datetime import datetime
-
 import numpy as np
-
 from data import data
 import model as model_class
 import torch
 import visualize as v
 import pandas as pd
-from src.data.data import FORECASTHORIZON
 
-# training setup
 torch.manual_seed(41)
-f_input=29
-model = model_class.LSTMModel(inputL = f_input, hiddenL1=100, hiddenL2=100, hiddenL3=100, outputL=1)
+model = model_class.LSTMModel(inputL = data.T_COMBINED.shape[1], hiddenL1=100, hiddenL2=100, hiddenL3=100, outputL=1)
 criterion = torch.nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-x_train, x_test, y_train, y_test, rest_scaler, price_scaler = data.prepare_training_data(data.t_combined)
+x_train, x_test, y_train, y_test, rest_scaler, price_scaler = data.prepare_training_data(data.T_COMBINED)
 
 def run():
     # get the data and scaler
-    x_train, x_test, y_train, y_test, rest_scaler, price_scaler = data.prepare_training_data(data.t_combined)
+    x_train, x_test, y_train, y_test, rest_scaler, price_scaler = data.prepare_training_data(data.T_COMBINED)
 
     print("x_train:", x_train.shape)
     print("x_test:", x_test.shape)

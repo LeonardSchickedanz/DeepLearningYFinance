@@ -6,17 +6,14 @@ from dotenv import load_dotenv
 import os
 import requests
 
-# api key
+# API KEY
 load_dotenv()
 API_KEY = os.getenv("API_KEY")
 
-# directory
-#directory = '../data_xlsx/'
-directory_raw = '../../data/raw/'
-directory_processed = '../../data/processed/'
+directory_raw = r'C:\Users\LeonardSchickedanz\PycharmProjects\PredictStockPrice\data\raw'
+directory_processed = r'C:\Users\LeonardSchickedanz\PycharmProjects\PredictStockPrice\data\processed'
 
 # RECEIVE DATA
-
 def api_raw_data_to_excel():
 
     api_d_fundamental_data = FundamentalData(key=API_KEY, output_format='pandas')
@@ -90,17 +87,17 @@ def economic_indicators_to_excel():
 #api_raw_data_to_excel()
 
 DATA_LIST = [
-    pd.read_excel(f'{directory_raw}d_real_gdp_raw.xlsx', index_col=0),
-    pd.read_excel(f'{directory_raw}d_real_gdp_per_capita_raw.xlsx', index_col=0),
-    pd.read_excel(f'{directory_raw}d_federal_funds_rate_raw.xlsx', index_col=0),
-    pd.read_excel(f'{directory_raw}d_cpi_raw.xlsx', index_col=0),
-    pd.read_excel(f'{directory_raw}d_inflation_raw.xlsx', index_col=0),
-    pd.read_excel(f'{directory_raw}d_retail_sales_raw.xlsx', index_col=0),
-    pd.read_excel(f'{directory_raw}d_durables_raw.xlsx', index_col=0),
-    pd.read_excel(f'{directory_raw}d_unemployment_raw.xlsx', index_col=0),
-    pd.read_excel(f'{directory_raw}d_nonfarm_payroll_raw.xlsx', index_col=0),
-    pd.read_excel(f'{directory_raw}d_quarterly_income_raw.xlsx', index_col=0),
-    pd.read_excel(f'{directory_raw}d_timeseries_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_real_gdp_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_real_gdp_per_capita_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_federal_funds_rate_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_cpi_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_inflation_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_retail_sales_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_durables_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_unemployment_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_nonfarm_payroll_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_quarterly_income_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_timeseries_raw.xlsx', index_col=0),
     ]
 
 # CLEAN DATA
@@ -108,6 +105,11 @@ d_quarterly_income = DATA_LIST[9]
 d_time_series = DATA_LIST[10]
 
 d_time_series = d_time_series.reset_index()
+d_time_series.rename(columns={'1. open': 'open'}, inplace=True)
+d_time_series.rename(columns={'2. high': 'high'}, inplace=True)
+d_time_series.rename(columns={'3. low': 'low'}, inplace=True)
+d_time_series.rename(columns={'4. close': 'close'}, inplace=True)
+d_time_series.rename(columns={'5. volume': 'volume'}, inplace=True)
 d_quarterly_income = d_quarterly_income.drop(columns='depreciation')
 d_quarterly_income = d_quarterly_income.drop(columns='reportedCurrency')
 d_quarterly_income.replace("None", np.nan)
@@ -117,6 +119,8 @@ d_quarterly_income.rename(columns={'fiscalDateEnding': 'date'}, inplace=True)
 DATA_LIST[9] = d_quarterly_income
 DATA_LIST[10] = d_time_series
 
+for idx in range(len(DATA_LIST)-2):
+    DATA_LIST[idx]['value'] = DATA_LIST[idx].rename(columns={f'value': f'{economic_indicators[idx].lstrip('d_')}'}, inplace=True)
 
 # STRETCH DATA
 def stretch_data(data, min_d, max_d, date_column = 'date'):
@@ -150,25 +154,25 @@ for idx1, df1 in enumerate(DATA_LIST):
 assertion_length = len(DATA_LIST[0]['date'])
 for idx2, df2 in enumerate(DATA_LIST):
     if len(df2) != assertion_length:
-        raise Exception(f'Data does not have same length: {idx2}')
+        raise Exception(f'DATA DOES NOT HAVE SAME LENGTH {idx2}')
 
 for idx3 in range(assertion_length):
    assert (
-       assertion_length == DATA_LIST[1]['date'][idx3] and
-       assertion_length == DATA_LIST[2]['date'][idx3] and
-       assertion_length == DATA_LIST[3]['date'][idx3] and
-       assertion_length == DATA_LIST[4]['date'][idx3] and
-       assertion_length == DATA_LIST[5]['date'][idx3] and
-       assertion_length == DATA_LIST[6]['date'][idx3] and
-       assertion_length == DATA_LIST[7]['date'][idx3] and
-       assertion_length == DATA_LIST[8]['date'][idx3] and
-       assertion_length == DATA_LIST[9]['date'][idx3] and
-       assertion_length == DATA_LIST[10]['date'][idx3]
-   ), f'DIFFERENCE FOUND: {idx3}'
+       DATA_LIST[0]['date'][idx3] == DATA_LIST[1]['date'][idx3] and
+       DATA_LIST[0]['date'][idx3] == DATA_LIST[2]['date'][idx3] and
+       DATA_LIST[0]['date'][idx3] == DATA_LIST[3]['date'][idx3] and
+       DATA_LIST[0]['date'][idx3] == DATA_LIST[4]['date'][idx3] and
+       DATA_LIST[0]['date'][idx3] == DATA_LIST[5]['date'][idx3] and
+       DATA_LIST[0]['date'][idx3] == DATA_LIST[6]['date'][idx3] and
+       DATA_LIST[0]['date'][idx3] == DATA_LIST[7]['date'][idx3] and
+       DATA_LIST[0]['date'][idx3] == DATA_LIST[8]['date'][idx3] and
+       DATA_LIST[0]['date'][idx3] == DATA_LIST[9]['date'][idx3] and
+       DATA_LIST[0]['date'][idx3] == DATA_LIST[10]['date'][idx3]
+   ), f'DIFFERENCE FOUND AT INDEX={idx3}'
 
 # DATA TO EXCEL
 for idx in range(len(DATA_LIST)-2):
-    DATA_LIST[idx].to_excel(f'{directory_processed}{economic_indicators[idx]}.xlsx')
-DATA_LIST[9].to_excel(f'{directory_processed}d_quarterly_income.xlsx')
-DATA_LIST[10].to_excel(f'{directory_processed}d_timeseries.xlsx')
+    DATA_LIST[idx].to_excel(f'{directory_processed}/{economic_indicators[idx]}.xlsx')
+DATA_LIST[9].to_excel(f'{directory_processed}/d_quarterly_income.xlsx')
+DATA_LIST[10].to_excel(f'{directory_processed}/d_timeseries.xlsx')
 
