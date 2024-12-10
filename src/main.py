@@ -13,7 +13,6 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 x_train, x_test, y_train, y_test, rest_scaler, price_scaler = data.prepare_training_data(data.T_COMBINED)
 
 def run():
-    # get the data and scaler
     x_train, x_test, y_train, y_test, rest_scaler, price_scaler = data.prepare_training_data(data.T_COMBINED)
 
     print("x_train:", x_train.shape)
@@ -24,8 +23,7 @@ def run():
 
     # Training loop
     model.train()
-    #epochs = x_train.size(1)
-    epochs = 10
+    epochs = 1
     losses = []
     test_losses = []
     prediction = []
@@ -48,14 +46,14 @@ def run():
             cell_state_val = torch.zeros(1, x_test.size(0), model.lstm.hidden_size).to(x_test.device)
 
             y_pred_test = model(x_test, hidden_state_val, cell_state_val)
-            test_loss = criterion(y_pred_test, y_test)
+            test_loss = criterion(y_pred_test[0], y_test)
             test_losses.append(test_loss.item())
         model.train()
 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        prediction = y_pred_test
+        prediction.append(y_pred_test[0].detach().numpy())
 
     prediction = np.vstack(prediction)
     return prediction, losses, test_losses, y_test, price_scaler
@@ -63,7 +61,7 @@ def run():
 prediction, losses, test_losses, y_test, price_scaler = run()
 
 # save data
-np_y_pred = prediction.detach().numpy()
+np_y_pred = np.array(prediction)
 df = pd.DataFrame(np_y_pred)
 df.to_csv("../model_output/prediction.csv", index=False)
 
@@ -72,7 +70,7 @@ pd.DataFrame(test_losses).to_csv("../model_output/test_losses.csv", index=False)
 
 # plot
 v.plot_losses(losses, test_losses)
-d_time_series = pd.read_excel('../data_xlsx/d_timeseries.xlsx', index_col=0)
+d_time_series = pd.read_excel(r'C:\Users\LeonardSchickedanz\PycharmProjects\PredictStockPrice\data\processed\d_timeseries.xlsx', index_col=0)
 d_time_series['date'] = d_time_series['date'].apply(lambda x: datetime.fromtimestamp(x).date()) # convert from unix timestamp to datetime
 date = d_time_series['date']
 date = date[:len(prediction)]

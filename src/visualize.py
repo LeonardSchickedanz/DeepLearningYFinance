@@ -1,4 +1,3 @@
-
 def plot_losses(losses, test_losses):
     fig = go.Figure()
 
@@ -40,7 +39,7 @@ import plotly.graph_objects as go
 def plot_stocks(dates, y_test, y_pred_test, scaler=None):
     if scaler is not None:
         y_test_transformed = scaler.inverse_transform(y_test.numpy().reshape(-1, 1))
-        y_pred_transformed = scaler.inverse_transform(y_pred_test.numpy().reshape(-1, 1))
+        y_pred_transformed = scaler.inverse_transform(y_pred_test.reshape(-1, 1))
     else:
         y_test_transformed = y_test.cpu().numpy()
         y_pred_transformed = y_pred_test.cpu().numpy()
