@@ -12,52 +12,60 @@ criterion = torch.nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
 
-
 def run():
     x_train, x_test, y_train, y_test, rest_scaler, price_scaler = data.prepare_training_data(data.T_COMBINED)
-
 
     print("x_train:", x_train.shape)
     print("x_test:", x_test.shape)
     print("y_train:", y_train.shape)
     print("y_test:", y_test.shape)
 
-    # Training loop
-    model.train()
-    epochs = 5
+    train_dataset = torch.utils.data.TensorDataset(x_train, y_train)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=32, shuffle=True)
+
+    epochs = 100
     losses = []
-    
     test_losses = []
     prediction = []
 
     for epoch in range(epochs):
+        model.train()
+        epoch_loss = 0
 
-        hidden_state = torch.zeros(1, x_train.size(0), model.lstm.hidden_size).to(x_train.device)
-        cell_state = torch.zeros(1, x_train.size(0), model.lstm.hidden_size).to(x_train.device)
+        for batch_x, batch_y in train_loader:
+            batch_size = batch_x.size(0)
+            hidden_state = torch.zeros(1, batch_size, model.lstm.hidden_size).to(batch_x.device)
+            cell_state = torch.zeros(1, batch_size, model.lstm.hidden_size).to(batch_x.device)
 
-        # training
-        y_pred, (hidden_state, cell_state) = model(x_train[:,:,:], hidden_state, cell_state)
+            optimizer.zero_grad()
 
-        loss = criterion(y_pred, y_train)
-        losses.append(loss.item())
-        print(epoch)
-        # validation
+            batch_pred, _ = model(batch_x, hidden_state, cell_state)
+
+            loss = criterion(batch_pred, batch_y)
+            epoch_loss += loss.item()
+
+            loss.backward()
+            optimizer.step()
+
+        avg_loss = epoch_loss / len(train_loader)
+        losses.append(avg_loss)
+
         model.eval()
         with torch.no_grad():
-            hidden_state_val = torch.zeros(1, x_test.size(0), model.lstm.hidden_size).to(x_test.device)
-            cell_state_val = torch.zeros(1, x_test.size(0), model.lstm.hidden_size).to(x_test.device)
+            batch_size_test = x_test.size(0)
+            hidden_state_val = torch.zeros(1, batch_size_test, model.lstm.hidden_size).to(x_test.device)
+            cell_state_val = torch.zeros(1, batch_size_test, model.lstm.hidden_size).to(x_test.device)
 
-            y_pred_test = model(x_test, hidden_state_val, cell_state_val)
-            test_loss = criterion(y_pred_test[0], y_test)
+            y_pred_test, _ = model(x_test, hidden_state_val, cell_state_val)
+            test_loss = criterion(y_pred_test, y_test)
             test_losses.append(test_loss.item())
-        model.train()
 
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        prediction.append(y_pred_test[0].detach().numpy())
+            prediction.append(y_pred_test.detach().numpy())
 
-    prediction = np.vstack(prediction)
+        print(f"Epoch {epoch}: Train Loss = {avg_loss}, Test Loss = {test_loss.item()}")
+
+    prediction = np.vstack(prediction) if len(prediction) > 0 else None
+
     return prediction, losses, test_losses, y_test, price_scaler
 
 prediction, losses, test_losses, y_test, price_scaler = run()
@@ -79,3 +87,25 @@ date = date[:len(prediction)]
 
 date = date[-len(y_test):]
 v.plot_stocks(date, y_test, prediction, scaler=price_scaler)
+
+def evaluate_prediction(actual, forecast):
+    # Berechne die Differenz zwischen tatsächlichen Werten und Vorhersagen
+    diff = np.array(actual) - np.array(forecast)
+
+    # Berechne den mittleren absoluten Fehler (MAE)
+    mae = np.mean(np.abs(diff))
+
+    # Berechne den mittleren quadratischen Fehler (MSE)
+    mse = np.mean(diff ** 2)
+
+    # Berechne die Wurzel des mittleren quadratischen Fehlers (RMSE)
+    rmse = np.sqrt(mse)
+
+    # Berechne den Determinationskoeffizienten (R-Quadrat)
+    r_squared = 1 - (np.sum((actual - forecast) ** 2) / np.sum((actual - np.mean(actual)) ** 2))
+    print(f'MAE: {mae}')
+    print(f'MSE: {mse}')
+    print(f'RMSE: {rmse}')
+    print(f'R-Squared: {r_squared}')
+
+evaluate_prediction(y_test, prediction)

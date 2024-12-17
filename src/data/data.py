@@ -53,7 +53,6 @@ d_combined = merge_dataframes(DATA_LIST)
 d_combined.to_excel(f'{directory_processed}d_combined.xlsx')
 
 T_COMBINED = torch.tensor(d_combined.values).float()
-print(T_COMBINED)
 
 def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, closed_price_column=36):
 
@@ -102,8 +101,5 @@ def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, close
 
     return x_train, x_test, y_train, y_test, rest_scaler, price_scaler
 
-x_train, x_test, y_train, y_test, rest_scaler, price_scaler = prepare_training_data(T_COMBINED)
-y_t = price_scaler.inverse_transform(y_test)
-print(y_t)
 
 
