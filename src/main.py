@@ -11,19 +11,22 @@ model = model_class.LSTMModel(inputL = data.T_COMBINED.shape[1], hiddenL1=100, h
 criterion = torch.nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
+
+
 def run():
     x_train, x_test, y_train, y_test, rest_scaler, price_scaler = data.prepare_training_data(data.T_COMBINED)
+
 
     print("x_train:", x_train.shape)
     print("x_test:", x_test.shape)
     print("y_train:", y_train.shape)
     print("y_test:", y_test.shape)
-    print("\n")
 
     # Training loop
     model.train()
-    epochs = 10
+    epochs = 5
     losses = []
+    
     test_losses = []
     prediction = []
 
@@ -73,7 +76,6 @@ d_time_series = pd.read_excel(r'C:\Users\LeonardSchickedanz\PycharmProjects\Pred
 d_time_series['date'] = d_time_series['date'].apply(lambda x: datetime.fromtimestamp(x).date()) # convert from unix timestamp to datetime
 date = d_time_series['date']
 date = date[:len(prediction)]
-
 
 date = date[-len(y_test):]
 v.plot_stocks(date, y_test, prediction, scaler=price_scaler)
