@@ -10,7 +10,6 @@ torch.manual_seed(41)
 model = model_class.LSTMModel(inputL = data.T_COMBINED.shape[1], hiddenL1=100, hiddenL2=100, hiddenL3=100, outputL=1)
 criterion = torch.nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-x_train, x_test, y_train, y_test, rest_scaler, price_scaler = data.prepare_training_data(data.T_COMBINED)
 
 def run():
     x_train, x_test, y_train, y_test, rest_scaler, price_scaler = data.prepare_training_data(data.T_COMBINED)
@@ -23,13 +22,13 @@ def run():
 
     # Training loop
     model.train()
-    epochs = 1
+    epochs = 10
     losses = []
     test_losses = []
     prediction = []
 
     for epoch in range(epochs):
-        # Initialisierung des Hidden- und Cell-States für Training
+
         hidden_state = torch.zeros(1, x_train.size(0), model.lstm.hidden_size).to(x_train.device)
         cell_state = torch.zeros(1, x_train.size(0), model.lstm.hidden_size).to(x_train.device)
 
@@ -76,6 +75,5 @@ date = d_time_series['date']
 date = date[:len(prediction)]
 
 
-#print(prediction.shape)
 date = date[-len(y_test):]
 v.plot_stocks(date, y_test, prediction, scaler=price_scaler)

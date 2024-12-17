@@ -5,6 +5,7 @@ import pandas as pd
 from dotenv import load_dotenv
 import os
 import requests
+import yfinance as yf
 
 # API KEY
 load_dotenv()
@@ -19,11 +20,19 @@ def api_raw_data_to_excel():
     api_d_fundamental_data = FundamentalData(key=API_KEY, output_format='pandas')
     api_d_time_series = TimeSeries(key=API_KEY, output_format='pandas')
 
-    d_time_series, _ = api_d_time_series.get_daily(symbol='AAPL', outputsize='full')
+    #d_time_series, _ = api_d_time_series.get_daily_adjusted(symbol='AAPL', outputsize='full')
     d_quarterly_income, _ = api_d_fundamental_data.get_income_statement_quarterly(symbol='AAPL')
 
-    d_quarterly_income.to_excel(f'{directory_raw}d_quarterly_income_raw.xlsx', index=True)
-    d_time_series.to_excel(f'{directory_raw}d_timeseries_raw.xlsx', index=True)
+    d_time_series = yf.download('AAPL',
+                       start="2000-01-01",
+                       end="2024-12-17",
+                       interval="1d",
+                       auto_adjust=True)
+
+    d_time_series.index = d_time_series.index.tz_localize(None)
+
+    d_quarterly_income.to_excel(fr'{directory_raw}\d_quarterly_income_raw.xlsx', index=True)
+    d_time_series.to_excel(fr'{directory_raw}\d_timeseries_raw.xlsx', index=True)
 
 economic_indicators = (
     'd_real_gdp',
@@ -84,7 +93,7 @@ def economic_indicators_to_excel():
     return dataframes
 
 #economic_indicators_to_excel()
-#api_raw_data_to_excel()
+api_raw_data_to_excel()
 
 DATA_LIST = [
     pd.read_excel(f'{directory_raw}/d_real_gdp_raw.xlsx', index_col=0),
@@ -104,17 +113,16 @@ DATA_LIST = [
 d_quarterly_income = DATA_LIST[9]
 d_time_series = DATA_LIST[10]
 
-d_time_series = d_time_series.reset_index()
-d_time_series.rename(columns={'1. open': 'open'}, inplace=True)
-d_time_series.rename(columns={'2. high': 'high'}, inplace=True)
-d_time_series.rename(columns={'3. low': 'low'}, inplace=True)
-d_time_series.rename(columns={'4. close': 'close'}, inplace=True)
-d_time_series.rename(columns={'5. volume': 'volume'}, inplace=True)
+d_time_series = d_time_series.iloc[2:].reset_index(drop=False)
+d_time_series.columns = ['date', 'close', 'high', 'low', 'open', 'volume']
+d_time_series = d_time_series[::-1].reset_index(drop=True)
+
 d_quarterly_income = d_quarterly_income.drop(columns='depreciation')
 d_quarterly_income = d_quarterly_income.drop(columns='reportedCurrency')
 d_quarterly_income.replace("None", np.nan)
 d_quarterly_income = d_quarterly_income.fillna(0) # replaces every None with 0
 d_quarterly_income.rename(columns={'fiscalDateEnding': 'date'}, inplace=True)
+
 
 DATA_LIST[9] = d_quarterly_income
 DATA_LIST[10] = d_time_series
@@ -123,13 +131,16 @@ for idx in range(len(DATA_LIST)-2):
     DATA_LIST[idx]['value'] = DATA_LIST[idx].rename(columns={f'value': f'{economic_indicators[idx].lstrip('d_')}'}, inplace=True)
 
 # STRETCH DATA
-def stretch_data(data, min_d, max_d, date_column = 'date'):
+def stretch_data(data, min_date, max_date, date_column = 'date'):
     data.set_index(date_column, inplace=True)
-    data.sort_index(inplace=True)
+    #data.sort_index(inplace=True)
+
     data = data.resample('D').ffill()
-    date_range = pd.date_range(start=min_d, end=max_d, freq='D')
+
+    date_range = pd.date_range(start=min_date, end=max_date, freq='D')
     data = data.reindex(date_range)
     data = data.reset_index(names=['date'])
+
     data = data.iloc[::-1].reset_index(drop=True)
 
     return data
@@ -137,7 +148,7 @@ def stretch_data(data, min_d, max_d, date_column = 'date'):
 for df in DATA_LIST:
     df['date'] = pd.to_datetime(df['date'])
 date_columns = [df['date'] for df in DATA_LIST]
-max_d = min(df['date'].max() for df in DATA_LIST)
+max_d = min(df['date'].max() for df in DATA_LIST) # currently 2023-01-01
 min_d = max(df['date'].min() for df in DATA_LIST)
 
 # UNIX TIME STAMPS
@@ -147,9 +158,10 @@ def date_to_unix_time_stamp(data, date_column='date'):
     return data
 
 for idx1, df1 in enumerate(DATA_LIST):
-    DATA_LIST[idx1] = stretch_data(data=df1,min_d=min_d ,max_d=max_d)
+    DATA_LIST[idx1] = stretch_data(data=df1,min_date=min_d ,max_date=max_d)
     DATA_LIST[idx1] = date_to_unix_time_stamp(DATA_LIST[idx1])
 
+DATA_LIST[10].to_excel(r'C:\Users\LeonardSchickedanz\PycharmProjects\PredictStockPrice\data\d_timeseries_raw3.xlsx')
 # CHECK DATA
 assertion_length = len(DATA_LIST[0]['date'])
 for idx2, df2 in enumerate(DATA_LIST):
