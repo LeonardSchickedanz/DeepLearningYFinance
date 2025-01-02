@@ -1,7 +1,5 @@
 from datetime import datetime
 import numpy as np
-from sklearn.utils.multiclass import type_of_target
-
 from data import data
 import model as model_class
 import torch
@@ -9,7 +7,7 @@ import visualize as v
 import pandas as pd
 
 torch.manual_seed(41)
-model = model_class.LSTMModel(inputL = data.T_COMBINED.shape[1], hiddenL1=100, hiddenL2=100, hiddenL3=100, outputL=1)
+model = model_class.LSTMModel(inputL=data.T_COMBINED.shape[1], hiddenL1=200, hiddenL2=200, hiddenL3=200, outputL=1)
 criterion = torch.nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
@@ -22,13 +20,18 @@ def run():
     print("y_test:", y_test.shape)
 
     train_dataset = torch.utils.data.TensorDataset(x_train, y_train)
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=32, shuffle=True)
+    # Geändert: shuffle=False um zeitliche Abhängigkeit zu bewahren
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=32, shuffle=False)
 
-    epochs = 3
+    epochs = 200
     losses = []
     test_losses = []
-    prediction = []
-    final_prediction = []
+
+    # early stopping parameter
+    best_loss = float('inf')
+    patience = 10
+    no_improve = 0
+    best_prediction = None
 
     for epoch in range(epochs):
         model.train()
@@ -62,19 +65,31 @@ def run():
             test_loss = criterion(y_pred_test, y_test)
             test_losses.append(test_loss.item())
 
-            prediction.append(y_pred_test.detach().numpy().flatten())
-            #print("y_red_test: ",y_pred_test.detach().numpy().flatten())
+            # early stopping logic
+            if test_loss < best_loss:
+                best_loss = test_loss
+                best_prediction = y_pred_test.detach().numpy().flatten()
+                no_improve = 0
+            else:
+                no_improve += 1
 
-            if epoch == epochs - 1:
-                final_prediction = y_pred_test.detach().numpy().flatten()
-                #print(final_prediction)
+            if no_improve >= patience:
+                print(f"Early stopping at epoch {epoch}")
+                break
 
         print(f"Epoch {epoch}: Train Loss = {avg_loss}, Test Loss = {test_loss.item()}")
-        print(f'final_prediction length: {len(final_prediction)}')
 
-    return final_prediction, losses, test_losses, y_test, main_scaler, price_scaler
+    # descaling
+    final_prediction = price_scaler.inverse_transform(best_prediction.reshape(-1, 1)).flatten()
+    y_test_descaled = price_scaler.inverse_transform(y_test.reshape(-1, 1)).flatten()
+
+    return final_prediction, losses, test_losses, y_test_descaled, main_scaler, price_scaler
+
 
 prediction, losses, test_losses, y_test, main_scaler, price_scaler = run()
+
+# saving model data
+torch.save(model.state_dict(), 'best_model.pth')
 
 #print(type(prediction))
 #print("prediction[0]", prediction[0])
