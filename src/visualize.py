@@ -34,21 +34,30 @@ def plot_losses(losses, test_losses):
     fig.show()
 
 import plotly.graph_objects as go
+import numpy as np
+
 
 def plot_stocks(dates, y_test, y_pred_test, scaler):
+    if len(y_test) != len(y_pred_test):
+        print(f"y_test ({len(y_test)}) & y_pred_test ({len(y_pred_test)}) do not have the same length")
+    if scaler is None:
+        print("scaler is none")
 
-    if len(y_test) != len(y_pred_test): print(f"y_test ({len(y_test)}) & y_pred_test ({len(y_pred_test)}) do not have the same length")
-    if scaler is None: print("scaler is none")
+    y_test = np.array(y_test)
+    y_pred_test = np.array(y_pred_test)
 
-    y_test_transformed = scaler.inverse_transform(y_test.numpy().reshape(-1, 1))
+    # descaling
+    y_test_transformed = scaler.inverse_transform(y_test.reshape(-1, 1))
     y_pred_transformed = scaler.inverse_transform(y_pred_test.reshape(-1, 1))
 
+    # inverse
+    y_test_transformed = y_test_transformed[::-1]
+    y_pred_transformed = y_pred_transformed[::-1]
 
-    # Stelle sicher, dass alle Arrays die gleiche Länge haben
-    #min_len = min(len(dates), len(y_test_transformed), len(y_pred_transformed))
-    #dates = dates[-min_len:]  # Nimm die letzten min_len Einträge
-    #y_test_transformed = y_test_transformed[-min_len:]
-    #y_pred_transformed = y_pred_transformed[-min_len:]
+    min_len = min(len(dates), len(y_test_transformed), len(y_pred_transformed))
+    dates = dates[-min_len:]
+    y_test_transformed = y_test_transformed[-min_len:]
+    y_pred_transformed = y_pred_transformed[-min_len:]
 
     fig = go.Figure()
 

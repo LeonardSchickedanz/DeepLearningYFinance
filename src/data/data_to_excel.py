@@ -162,6 +162,7 @@ for idx1, df1 in enumerate(DATA_LIST):
     DATA_LIST[idx1] = date_to_unix_time_stamp(DATA_LIST[idx1])
 
 DATA_LIST[10].to_excel(r'C:\Users\LeonardSchickedanz\PycharmProjects\PredictStockPrice\data\d_timeseries_raw3.xlsx')
+
 # CHECK DATA
 assertion_length = len(DATA_LIST[0]['date'])
 for idx2, df2 in enumerate(DATA_LIST):
