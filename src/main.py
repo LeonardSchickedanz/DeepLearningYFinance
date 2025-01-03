@@ -126,4 +126,4 @@ def evaluate_prediction(actual, forecast):
     print(f'R-Squared: {r_squared}')
     print(f'mean absolute percentage error: {mape}')
 
-#evaluate_prediction(y_test, prediction)
+evaluate_prediction(y_test, prediction)
