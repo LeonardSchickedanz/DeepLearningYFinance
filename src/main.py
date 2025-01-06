@@ -7,7 +7,10 @@ import visualize as v
 import pandas as pd
 
 torch.manual_seed(41)
-model = model_class.LSTMModel(inputL=data.T_COMBINED.shape[1], hiddenL1=200, hiddenL2=200, hiddenL3=200, outputL=1)
+ticker = 'AAPL'
+T_COMBINED = data.main(ticker)
+
+model = model_class.LSTMModel(inputL=T_COMBINED.shape[1], hiddenL1=200, hiddenL2=200, hiddenL3=200, outputL=1)
 criterion = torch.nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 

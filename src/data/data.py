@@ -29,6 +29,7 @@ directory_processed = '../data/processed/'
 #directory = '../../data_xlsx/'
 #directory_processed = '../../data/processed/'
 
+
 DATA_LIST = (
     pd.read_excel(f'{directory_processed}d_real_gdp.xlsx', index_col=0),
     pd.read_excel(f'{directory_processed}d_real_gdp_per_capita.xlsx', index_col=0),
@@ -41,21 +42,24 @@ DATA_LIST = (
     pd.read_excel(f'{directory_processed}d_nonfarm_payroll.xlsx', index_col=0),
     pd.read_excel(f'{directory_processed}d_quarterly_income.xlsx', index_col=0),
     pd.read_excel(f'{directory_processed}d_timeseries.xlsx', index_col=0),
-    )
+)
 
-def merge_dataframes(dataframes):
-    d_merged = pd.concat(dataframes, axis=1)
-    d_merged = d_merged.loc[:, ~d_merged.columns.duplicated()]
-    d_merged = d_merged.drop(columns='value')
-    return d_merged
+def main(ticker):
+    data_to_excel.main(ticker)
 
-d_combined = merge_dataframes(DATA_LIST)
-d_combined.to_excel(f'{directory_processed}d_combined.xlsx')
+    def merge_dataframes(dataframes):
+        d_merged = pd.concat(dataframes, axis=1)
+        d_merged = d_merged.loc[:, ~d_merged.columns.duplicated()]
+        d_merged = d_merged.drop(columns='value')
+        return d_merged
 
-T_COMBINED = torch.tensor(d_combined.values).float()
+    d_combined = merge_dataframes(DATA_LIST)
+    d_combined.to_excel(f'{directory_processed}d_combined.xlsx')
+
+    T_COMBINED = torch.tensor(d_combined.values).float()
+    return T_COMBINED
 
 def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, closed_price_column=36):
-
     tensor = torch.flip(tensor, [0])
     size_rows = tensor.size(0)
     x = []
@@ -70,13 +74,13 @@ def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, close
     scaled_priced_column = torch.tensor(price_scaler.fit_transform(priced_column_data.numpy()), dtype=tensor.dtype)
 
     # Scale the rest of the columns
-    rest_columns = torch.cat([tensor[:, :closed_price_column], tensor[:, closed_price_column+1:]], dim=1)
+    rest_columns = torch.cat([tensor[:, :closed_price_column], tensor[:, closed_price_column + 1:]], dim=1)
     scaled_rest_columns = torch.tensor(rest_scaler.fit_transform(rest_columns.numpy()), dtype=tensor.dtype)
 
     # Reconstruct the scaled tensor
     scaled_tensor = torch.cat([scaled_rest_columns[:, :closed_price_column],
-                                scaled_priced_column,
-                                scaled_rest_columns[:, closed_price_column:]], dim=1)
+                               scaled_priced_column,
+                               scaled_rest_columns[:, closed_price_column:]], dim=1)
 
     for idx in range(size_rows - look_back_days - forecast_horizon):
         # X-Block: look_back_days Reihen
@@ -100,6 +104,3 @@ def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, close
     y_test = y_test.view(-1, 1)
 
     return x_train, x_test, y_train, y_test, rest_scaler, price_scaler
-
-
-
