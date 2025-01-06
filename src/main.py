@@ -14,7 +14,7 @@ model = model_class.LSTMModel(inputL=T_COMBINED.shape[1], hiddenL1=200, hiddenL2
 criterion = torch.nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-def run():
+def train():
     x_train, x_test, y_train, y_test, main_scaler, price_scaler = data.prepare_training_data(data.T_COMBINED)
 
     print("x_train:", x_train.shape)
@@ -23,7 +23,6 @@ def run():
     print("y_test:", y_test.shape)
 
     train_dataset = torch.utils.data.TensorDataset(x_train, y_train)
-    # Geändert: shuffle=False um zeitliche Abhängigkeit zu bewahren
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=32, shuffle=False)
 
     epochs = 200
@@ -89,7 +88,7 @@ def run():
     return final_prediction, losses, test_losses, y_test_descaled, main_scaler, price_scaler
 
 
-prediction, losses, test_losses, y_test, main_scaler, price_scaler = run()
+prediction, losses, test_losses, y_test, main_scaler, price_scaler = train()
 
 # saving model data
 torch.save(model.state_dict(), 'best_model.pth')
@@ -130,3 +129,35 @@ def evaluate_prediction(actual, forecast):
     print(f'mean absolute percentage error: {mape}')
 
 evaluate_prediction(y_test, prediction)
+
+def test_once(test_ticker):
+
+    model.load_state_dict(torch.load('best_model.pth'))
+    model.eval()
+
+    t_combined = data.main(test_ticker)
+
+    x_train, x_test, y_train, y_test, main_scaler, price_scaler = data.prepare_training_data(t_combined)
+
+    with torch.no_grad():
+        batch_size_test = x_test.size(0)
+        hidden_state_val = torch.zeros(1, batch_size_test, model.lstm.hidden_size).to(x_test.device)
+        cell_state_val = torch.zeros(1, batch_size_test, model.lstm.hidden_size).to(x_test.device)
+
+        y_pred_test, _ = model(x_test, hidden_state_val, cell_state_val)
+
+    prediction_descaled = price_scaler.inverse_transform(y_pred_test.cpu().numpy().reshape(-1, 1)).flatten()
+    y_test_descaled = price_scaler.inverse_transform(y_test.cpu().numpy().reshape(-1, 1)).flatten()
+
+    d_time_series = pd.read_excel(
+        r'C:\Users\LeonardSchickedanz\PycharmProjects\PredictStockPrice\data\processed\d_timeseries.xlsx',
+        index_col=0
+    )
+    d_time_series['date'] = d_time_series['date'].apply(lambda x: datetime.fromtimestamp(x).date())  # Unix-Timestamp konvertieren
+    date = d_time_series['date'][:len(prediction_descaled)]
+    date = date[-len(y_test_descaled):]  # Zeitrahmen anpassen
+
+    v.plot_stocks(date, y_test_descaled, prediction_descaled, scaler=price_scaler)
+
+    evaluate_prediction(y_test_descaled, prediction_descaled)
+

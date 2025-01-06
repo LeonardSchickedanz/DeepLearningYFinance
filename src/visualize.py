@@ -36,7 +36,6 @@ def plot_losses(losses, test_losses):
 import plotly.graph_objects as go
 import numpy as np
 
-
 def plot_stocks(dates, y_test, y_pred_test, scaler):
     if len(y_test) != len(y_pred_test):
         print(f"y_test ({len(y_test)}) & y_pred_test ({len(y_pred_test)}) do not have the same length")
