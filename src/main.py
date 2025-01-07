@@ -8,14 +8,14 @@ import pandas as pd
 
 torch.manual_seed(41)
 ticker = 'AAPL'
-T_COMBINED = data.main(ticker)
+T_COMBINED = data.main(ticker, False)
 
 model = model_class.LSTMModel(inputL=T_COMBINED.shape[1], hiddenL1=200, hiddenL2=200, hiddenL3=200, outputL=1)
 criterion = torch.nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-def train():
-    x_train, x_test, y_train, y_test, main_scaler, price_scaler = data.prepare_training_data(data.T_COMBINED)
+def train(t_combined):
+    x_train, x_test, y_train, y_test, main_scaler, price_scaler = data.prepare_training_data(t_combined)
 
     print("x_train:", x_train.shape)
     print("x_test:", x_test.shape)
@@ -85,34 +85,31 @@ def train():
     final_prediction = price_scaler.inverse_transform(best_prediction.reshape(-1, 1)).flatten()
     y_test_descaled = price_scaler.inverse_transform(y_test.reshape(-1, 1)).flatten()
 
+    # saving model data
+    torch.save(model.state_dict(), 'best_model.pth')
+
+    # save data
+    np_y_pred = np.array(final_prediction)
+    df = pd.DataFrame(np_y_pred)
+    df.to_csv("../model_output/prediction.csv", index=False)
+
+    pd.DataFrame(losses).to_csv("../model_output/losses.csv", index=False)
+    pd.DataFrame(test_losses).to_csv("../model_output/test_losses.csv", index=False)
+
     return final_prediction, losses, test_losses, y_test_descaled, main_scaler, price_scaler
 
+#prediction, losses, test_losses, y_test, main_scaler, price_scaler = train(T_COMBINED)
 
-prediction, losses, test_losses, y_test, main_scaler, price_scaler = train()
+def plot(losses, test_losses, prediction, y_test, price_scaler):
 
-# saving model data
-torch.save(model.state_dict(), 'best_model.pth')
+    v.plot_losses(losses, test_losses)
+    d_time_series = pd.read_excel(r'C:\Users\LeonardSchickedanz\PycharmProjects\PredictStockPrice\data\processed\d_timeseries.xlsx', index_col=0)
+    d_time_series['date'] = d_time_series['date'].apply(lambda x: datetime.fromtimestamp(x).date()) # convert from unix timestamp to datetime
+    date = d_time_series['date']
+    date = date[:len(prediction)]
 
-#print(type(prediction))
-#print("prediction[0]", prediction[0])
-
-# save data
-np_y_pred = np.array(prediction)
-df = pd.DataFrame(np_y_pred)
-df.to_csv("../model_output/prediction.csv", index=False)
-
-pd.DataFrame(losses).to_csv("../model_output/losses.csv", index=False)
-pd.DataFrame(test_losses).to_csv("../model_output/test_losses.csv", index=False)
-
-# plot
-v.plot_losses(losses, test_losses)
-d_time_series = pd.read_excel(r'C:\Users\LeonardSchickedanz\PycharmProjects\PredictStockPrice\data\processed\d_timeseries.xlsx', index_col=0)
-d_time_series['date'] = d_time_series['date'].apply(lambda x: datetime.fromtimestamp(x).date()) # convert from unix timestamp to datetime
-date = d_time_series['date']
-date = date[:len(prediction)]
-
-date = date[-len(y_test):]
-v.plot_stocks(date, y_test, prediction, scaler=price_scaler)
+    date = date[-len(y_test):]
+    v.plot_stocks(date, y_test, prediction, scaler=price_scaler)
 
 def evaluate_prediction(actual, forecast):
     diff = np.array(actual) - np.array(forecast)
@@ -128,14 +125,13 @@ def evaluate_prediction(actual, forecast):
     print(f'R-Squared: {r_squared}')
     print(f'mean absolute percentage error: {mape}')
 
-evaluate_prediction(y_test, prediction)
+#evaluate_prediction(y_test, prediction)
 
 def test_once(test_ticker):
-
     model.load_state_dict(torch.load('best_model.pth'))
     model.eval()
 
-    t_combined = data.main(test_ticker)
+    t_combined = data.main(test_ticker, False) # data.main calls data_to_excel.main if True
 
     x_train, x_test, y_train, y_test, main_scaler, price_scaler = data.prepare_training_data(t_combined)
 
@@ -146,18 +142,23 @@ def test_once(test_ticker):
 
         y_pred_test, _ = model(x_test, hidden_state_val, cell_state_val)
 
-    prediction_descaled = price_scaler.inverse_transform(y_pred_test.cpu().numpy().reshape(-1, 1)).flatten()
-    y_test_descaled = price_scaler.inverse_transform(y_test.cpu().numpy().reshape(-1, 1)).flatten()
+    prediction_descaled = price_scaler.inverse_transform(y_pred_test.numpy().reshape(-1, 1)).flatten()
+    y_test_descaled = price_scaler.inverse_transform(y_test.numpy().reshape(-1, 1)).flatten()
 
     d_time_series = pd.read_excel(
         r'C:\Users\LeonardSchickedanz\PycharmProjects\PredictStockPrice\data\processed\d_timeseries.xlsx',
         index_col=0
     )
-    d_time_series['date'] = d_time_series['date'].apply(lambda x: datetime.fromtimestamp(x).date())  # Unix-Timestamp konvertieren
+    d_time_series['date'] = d_time_series['date'].apply(lambda x: datetime.fromtimestamp(x).date())
     date = d_time_series['date'][:len(prediction_descaled)]
-    date = date[-len(y_test_descaled):]  # Zeitrahmen anpassen
+    date = date[-len(y_test_descaled):]
 
-    v.plot_stocks(date, y_test_descaled, prediction_descaled, scaler=price_scaler)
+    # Load and plot losses
+    losses = pd.read_csv("../model_output/losses.csv")['0'].tolist()
+    test_losses = pd.read_csv("../model_output/test_losses.csv")['0'].tolist()
 
+    plot(losses, test_losses, prediction_descaled, y_test_descaled, price_scaler)
     evaluate_prediction(y_test_descaled, prediction_descaled)
 
+ticker = 'NFLX'
+test_once(ticker)

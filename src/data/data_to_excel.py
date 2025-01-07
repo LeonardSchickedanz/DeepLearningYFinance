@@ -14,29 +14,25 @@ API_KEY = os.getenv("API_KEY")
 directory_raw = r'C:\\Users\\LeonardSchickedanz\\PycharmProjects\\PredictStockPrice\data\raw'
 directory_processed = r'C:\\Users\\LeonardSchickedanz\\PycharmProjects\\PredictStockPrice\\data\\processed'
 
-def main(ticker):
+def api_raw_data_to_excel(ticker):
+    api_d_fundamental_data = FundamentalData(key=API_KEY, output_format='pandas')
+    api_d_time_series = TimeSeries(key=API_KEY, output_format='pandas')
 
-    # RECEIVE DATA
-    def api_raw_data_to_excel():
+    # d_time_series, _ = api_d_time_series.get_daily_adjusted(symbol='ticker', outputsize='full')
+    d_quarterly_income, _ = api_d_fundamental_data.get_income_statement_quarterly(symbol=ticker)
 
-        api_d_fundamental_data = FundamentalData(key=API_KEY, output_format='pandas')
-        api_d_time_series = TimeSeries(key=API_KEY, output_format='pandas')
+    d_time_series = yf.download(ticker,
+                                start="2000-01-01",
+                                end="2024-12-17",
+                                interval="1d",
+                                auto_adjust=True)
 
-        #d_time_series, _ = api_d_time_series.get_daily_adjusted(symbol='ticker', outputsize='full')
-        d_quarterly_income, _ = api_d_fundamental_data.get_income_statement_quarterly(symbol='ticker')
+    d_time_series.index = d_time_series.index.tz_localize(None)
 
-        d_time_series = yf.download('ticker',
-                           start="2000-01-01",
-                           end="2024-12-17",
-                           interval="1d",
-                           auto_adjust=True)
+    d_quarterly_income.to_excel(fr'{directory_raw}\\d_quarterly_income_raw.xlsx', index=True)
+    d_time_series.to_excel(fr'{directory_raw}\\d_timeseries_raw.xlsx', index=True)
 
-        d_time_series.index = d_time_series.index.tz_localize(None)
-
-        d_quarterly_income.to_excel(fr'{directory_raw}\\d_quarterly_income_raw.xlsx', index=True)
-        d_time_series.to_excel(fr'{directory_raw}\\d_timeseries_raw.xlsx', index=True)
-
-    economic_indicators = (
+economic_indicators = (
         'd_real_gdp',
         'd_real_gdp_per_capita',
         'd_federal_funds_rate',
@@ -48,74 +44,93 @@ def main(ticker):
         'd_nonfarm_payroll'
         )
 
-    def economic_indicators_to_excel():
-        main_url = 'https://www.alphavantage.co/query?function='
-        api_key_url = f'&apikey={API_KEY}'
+def economic_indicators_to_excel():
+    main_url = 'https://www.alphavantage.co/query?function='
+    api_key_url = f'&apikey={API_KEY}'
 
-        url_list = (
-            'REAL_GDP&interval=annual',
-            'REAL_GDP_PER_CAPITA',
-            'FEDERAL_FUNDS_RATE&interval=monthly',
-            'CPI&interval=monthly',
-            'INFLATION',
-            'RETAIL_SALES',
-            'DURABLES',
-            'UNEMPLOYMENT',
-            'NONFARM_PAYROLL'
-        )
+    url_list = (
+        'REAL_GDP&interval=annual',
+        'REAL_GDP_PER_CAPITA',
+        'FEDERAL_FUNDS_RATE&interval=monthly',
+        'CPI&interval=monthly',
+        'INFLATION',
+        'RETAIL_SALES',
+        'DURABLES',
+        'UNEMPLOYMENT',
+        'NONFARM_PAYROLL'
+    )
 
-        dataframes = []
+    dataframes = []
 
-        for idx1, u in enumerate(url_list):
-            try:
-                url =  f'{main_url}{u}{api_key_url}'
-                r = requests.get(url)
-                data = r.json()
-            except requests.exceptions.RequestException as e:
-                print(f"Error fetching data for {u}: {e}")
-                return
+    for idx1, u in enumerate(url_list):
+        try:
+            url =  f'{main_url}{u}{api_key_url}'
+            r = requests.get(url)
+            data = r.json()
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching data for {u}: {e}")
+            return
 
-            if 'Information' in data and 'rate limit' in data['Information'].lower():
-                print("OUT OF API REQUESTS")
-                return
-            else:
-                print("API request successfull")
+        if 'Information' in data and 'rate limit' in data['Information'].lower():
+            print("OUT OF API REQUESTS")
+            return
+        else:
+            print("API request successfull")
 
-            dates = []
-            values = []
+        dates = []
+        values = []
 
-            for idx2 in range(0, len(data['data'])):
-                dates.append(data['data'][idx2]['date'])
-                values.append(data['data'][idx2]['value'])
+        for idx2 in range(0, len(data['data'])):
+            dates.append(data['data'][idx2]['date'])
+            values.append(data['data'][idx2]['value'])
 
-            assert len(dates) == len(values)
+        assert len(dates) == len(values)
 
-            df = pd.DataFrame({
-                "date": dates,
-                "value": values
-            })
-            dataframes.append(df)
+        df = pd.DataFrame({
+            "date": dates,
+            "value": values
+        })
+        dataframes.append(df)
 
-            df.to_excel(fr'{directory_raw}\\{economic_indicators[idx1]}_raw.xlsx', index=True)
+        df.to_excel(fr'{directory_raw}\\{economic_indicators[idx1]}_raw.xlsx', index=True)
 
-        return dataframes
+DATA_LIST = [
+    pd.read_excel(f'{directory_raw}/d_real_gdp_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_real_gdp_per_capita_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_federal_funds_rate_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_cpi_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_inflation_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_retail_sales_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_durables_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_unemployment_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_nonfarm_payroll_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_quarterly_income_raw.xlsx', index_col=0),
+    pd.read_excel(f'{directory_raw}/d_timeseries_raw.xlsx', index_col=0),
+    ]
+
+def stretch_data(data, min_date, max_date, date_column = 'date'):
+    data.set_index(date_column, inplace=True)
+    #data.sort_index(inplace=True)
+
+    data = data.resample('D').ffill()
+
+    date_range = pd.date_range(start=min_date, end=max_date, freq='D')
+    data = data.reindex(date_range)
+    data = data.reset_index(names=['date'])
+
+    data = data.iloc[::-1].reset_index(drop=True)
+
+    return data
+
+def date_to_unix_time_stamp(data, date_column='date'):
+    data[date_column] = pd.to_datetime(data[date_column])
+    data[date_column] = (data[date_column] - pd.Timestamp('1970-01-01')).dt.total_seconds()
+    return data
+
+def main(ticker):
 
     economic_indicators_to_excel()
-    api_raw_data_to_excel()
-
-    DATA_LIST = [
-        pd.read_excel(f'{directory_raw}/d_real_gdp_raw.xlsx', index_col=0),
-        pd.read_excel(f'{directory_raw}/d_real_gdp_per_capita_raw.xlsx', index_col=0),
-        pd.read_excel(f'{directory_raw}/d_federal_funds_rate_raw.xlsx', index_col=0),
-        pd.read_excel(f'{directory_raw}/d_cpi_raw.xlsx', index_col=0),
-        pd.read_excel(f'{directory_raw}/d_inflation_raw.xlsx', index_col=0),
-        pd.read_excel(f'{directory_raw}/d_retail_sales_raw.xlsx', index_col=0),
-        pd.read_excel(f'{directory_raw}/d_durables_raw.xlsx', index_col=0),
-        pd.read_excel(f'{directory_raw}/d_unemployment_raw.xlsx', index_col=0),
-        pd.read_excel(f'{directory_raw}/d_nonfarm_payroll_raw.xlsx', index_col=0),
-        pd.read_excel(f'{directory_raw}/d_quarterly_income_raw.xlsx', index_col=0),
-        pd.read_excel(f'{directory_raw}/d_timeseries_raw.xlsx', index_col=0),
-        ]
+    api_raw_data_to_excel(ticker)
 
     # CLEAN DATA
     d_quarterly_income = DATA_LIST[9]
@@ -138,20 +153,6 @@ def main(ticker):
     for idx in range(len(DATA_LIST)-2):
         DATA_LIST[idx]['value'] = DATA_LIST[idx].rename(columns={f'value': f'{economic_indicators[idx].lstrip('d_')}'}, inplace=True)
 
-    # STRETCH DATA
-    def stretch_data(data, min_date, max_date, date_column = 'date'):
-        data.set_index(date_column, inplace=True)
-        #data.sort_index(inplace=True)
-
-        data = data.resample('D').ffill()
-
-        date_range = pd.date_range(start=min_date, end=max_date, freq='D')
-        data = data.reindex(date_range)
-        data = data.reset_index(names=['date'])
-
-        data = data.iloc[::-1].reset_index(drop=True)
-
-        return data
 
     for df in DATA_LIST:
         df['date'] = pd.to_datetime(df['date'])
@@ -159,12 +160,7 @@ def main(ticker):
     max_d = min(df['date'].max() for df in DATA_LIST) # currently 2023-01-01
     min_d = max(df['date'].min() for df in DATA_LIST)
 
-    # UNIX TIME STAMPS
-    def date_to_unix_time_stamp(data, date_column='date'):
-        data[date_column] = pd.to_datetime(data[date_column])
-        data[date_column] = (data[date_column] - pd.Timestamp('1970-01-01')).dt.total_seconds()
-        return data
-
+    # UNIX TIME STAMPS AND STRETCH DATA
     for idx1, df1 in enumerate(DATA_LIST):
         DATA_LIST[idx1] = stretch_data(data=df1,min_date=min_d ,max_date=max_d)
         DATA_LIST[idx1] = date_to_unix_time_stamp(DATA_LIST[idx1])

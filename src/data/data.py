@@ -44,20 +44,11 @@ DATA_LIST = (
     pd.read_excel(f'{directory_processed}d_timeseries.xlsx', index_col=0),
 )
 
-def main(ticker):
-    data_to_excel.main(ticker)
-
-    def merge_dataframes(dataframes):
-        d_merged = pd.concat(dataframes, axis=1)
-        d_merged = d_merged.loc[:, ~d_merged.columns.duplicated()]
-        d_merged = d_merged.drop(columns='value')
-        return d_merged
-
-    d_combined = merge_dataframes(DATA_LIST)
-    d_combined.to_excel(f'{directory_processed}d_combined.xlsx')
-
-    T_COMBINED = torch.tensor(d_combined.values).float()
-    return T_COMBINED
+def read_and_merge_dataframes(dataframes):
+    d_merged = pd.concat(dataframes, axis=1)
+    d_merged = d_merged.loc[:, ~d_merged.columns.duplicated()]
+    d_merged = d_merged.drop(columns='value')
+    return d_merged
 
 def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, closed_price_column=36):
     tensor = torch.flip(tensor, [0])
@@ -104,3 +95,14 @@ def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, close
     y_test = y_test.view(-1, 1)
 
     return x_train, x_test, y_train, y_test, rest_scaler, price_scaler
+
+def main(ticker, call_data_to_excel_main):
+
+    if call_data_to_excel_main is True:
+        data_to_excel.main(ticker)
+
+    d_combined = read_and_merge_dataframes(DATA_LIST)
+    d_combined.to_excel(f'{directory_processed}d_combined.xlsx') # for debugging
+
+    t_combined = torch.tensor(d_combined.values).float()
+    return t_combined
