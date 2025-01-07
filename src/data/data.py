@@ -50,6 +50,7 @@ def read_and_merge_dataframes(dataframes):
     d_merged = d_merged.drop(columns='value')
     return d_merged
 
+
 def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, closed_price_column=36):
     tensor = torch.flip(tensor, [0])
     size_rows = tensor.size(0)
@@ -59,25 +60,34 @@ def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, close
     price_scaler = MinMaxScaler(feature_range=(0, 1))
     rest_scaler = MinMaxScaler(feature_range=(0, 1))
 
-    column_to_plot = tensor[:, closed_price_column]
-    # scale the priced column separately
-    priced_column_data = tensor[:, closed_price_column].unsqueeze(1)
-    scaled_priced_column = torch.tensor(price_scaler.fit_transform(priced_column_data.numpy()), dtype=tensor.dtype)
+    price_column = tensor[:, closed_price_column].unsqueeze(1)
 
-    # scale the rest of the columns
-    rest_columns = torch.cat([tensor[:, :closed_price_column], tensor[:, closed_price_column + 1:]], dim=1)
-    scaled_rest_columns = torch.tensor(rest_scaler.fit_transform(rest_columns.numpy()), dtype=tensor.dtype)
+    price_scaler.fit(price_column.numpy())
 
-    # reconstruct the scaled tensor
-    scaled_tensor = torch.cat([scaled_rest_columns[:, :closed_price_column],
-                               scaled_priced_column,
-                               scaled_rest_columns[:, closed_price_column:]], dim=1)
+    scaled_price_column = torch.tensor(
+        price_scaler.transform(price_column.numpy()),
+        dtype=tensor.dtype
+    )
 
+    rest_columns = torch.cat(
+        [tensor[:, :closed_price_column], tensor[:, closed_price_column + 1:]],
+        dim=1
+    )
+    scaled_rest_columns = torch.tensor(
+        rest_scaler.fit_transform(rest_columns.numpy()),
+        dtype=tensor.dtype
+    )
+
+    # Tensor wieder zusammenbauen
+    scaled_tensor = torch.cat([
+        scaled_rest_columns[:, :closed_price_column],
+        scaled_price_column,
+        scaled_rest_columns[:, closed_price_column:]
+    ], dim=1)
+
+    # Sequenzen erstellen
     for idx in range(size_rows - look_back_days - forecast_horizon):
-        # X-Block: look_back_days Reihen
         x_block = scaled_tensor[idx:idx + look_back_days, :]
-
-        # Y-Wert: Vorhersagewert nach look_back_days + forecast_horizon
         y_value = scaled_tensor[idx + look_back_days + forecast_horizon, closed_price_column]
         x.append(x_block)
         y.append(y_value)
@@ -85,12 +95,15 @@ def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, close
     x = torch.stack(x)
     y = torch.stack(y)
 
+    # train test split
     split_ratio = 0.8
     split_index = int(len(x) * split_ratio)
     x_train = x[:split_index]
     y_train = y[:split_index]
     x_test = x[split_index:]
     y_test = y[split_index:]
+
+    # Reshape für das Training
     y_train = y_train.view(-1, 1)
     y_test = y_test.view(-1, 1)
 

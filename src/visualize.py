@@ -37,6 +37,7 @@ import plotly.graph_objects as go
 import numpy as np
 
 def plot_stocks(dates, y_test, y_pred_test, scaler):
+
     if len(y_test) != len(y_pred_test):
         print(f"y_test ({len(y_test)}) & y_pred_test ({len(y_pred_test)}) do not have the same length")
     if scaler is None:
@@ -50,8 +51,8 @@ def plot_stocks(dates, y_test, y_pred_test, scaler):
     y_pred_transformed = scaler.inverse_transform(y_pred_test.reshape(-1, 1))
 
     # inverse
-    y_test_transformed = y_test_transformed[::-1]
-    y_pred_transformed = y_pred_transformed[::-1]
+   # y_test_transformed = y_test_transformed[::-1]
+   # y_pred_transformed = y_pred_transformed[::-1]
 
     min_len = min(len(dates), len(y_test_transformed), len(y_pred_transformed))
     dates = dates[-min_len:]

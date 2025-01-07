@@ -14,7 +14,6 @@ directory_processed = r'C:\\Users\\LeonardSchickedanz\\PycharmProjects\\PredictS
 
 def test_time_series(ticker):
 
-
     d_time_series = yf.download(ticker,
                                 start="2000-01-01",
                                 end="2024-12-17",

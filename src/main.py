@@ -7,7 +7,7 @@ import visualize as v
 import pandas as pd
 
 torch.manual_seed(41)
-ticker = 'AAPL'
+ticker = 'NFLX'
 
 T_COMBINED = data.main(ticker)
 model = model_class.LSTMModel(inputL=T_COMBINED.shape[1], hiddenL1=200, hiddenL2=200, hiddenL3=200, outputL=1)
@@ -161,4 +161,4 @@ def test_once(test_ticker, call_data_to_excel_main = False):
     plot(losses, test_losses, prediction_descaled, y_test_descaled, price_scaler)
     evaluate_prediction(y_test_descaled, prediction_descaled)
 
-test_once('NFLX')
+test_once(ticker)
