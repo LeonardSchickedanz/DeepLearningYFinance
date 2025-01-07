@@ -60,15 +60,15 @@ def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, close
     rest_scaler = MinMaxScaler(feature_range=(0, 1))
 
     column_to_plot = tensor[:, closed_price_column]
-    # Scale the priced column separately
+    # scale the priced column separately
     priced_column_data = tensor[:, closed_price_column].unsqueeze(1)
     scaled_priced_column = torch.tensor(price_scaler.fit_transform(priced_column_data.numpy()), dtype=tensor.dtype)
 
-    # Scale the rest of the columns
+    # scale the rest of the columns
     rest_columns = torch.cat([tensor[:, :closed_price_column], tensor[:, closed_price_column + 1:]], dim=1)
     scaled_rest_columns = torch.tensor(rest_scaler.fit_transform(rest_columns.numpy()), dtype=tensor.dtype)
 
-    # Reconstruct the scaled tensor
+    # reconstruct the scaled tensor
     scaled_tensor = torch.cat([scaled_rest_columns[:, :closed_price_column],
                                scaled_priced_column,
                                scaled_rest_columns[:, closed_price_column:]], dim=1)
@@ -96,7 +96,7 @@ def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, close
 
     return x_train, x_test, y_train, y_test, rest_scaler, price_scaler
 
-def main(ticker, call_data_to_excel_main):
+def main(ticker, call_data_to_excel_main = False):
 
     if call_data_to_excel_main is True:
         data_to_excel.main(ticker)

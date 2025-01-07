@@ -1,0 +1,6 @@
+Netflix run with all data points: 
+mean absolut error: 224.5579071044922
+mean squared error: 68633.34375
+root mean squared error: 261.97967529296875
+R-Squared: -2.5124800205230713
+mean absolute percentage error: 45.02235794067383

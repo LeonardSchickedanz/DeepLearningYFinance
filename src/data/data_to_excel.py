@@ -17,7 +17,6 @@ directory_processed = r'C:\\Users\\LeonardSchickedanz\\PycharmProjects\\PredictS
 def api_raw_data_to_excel(ticker):
     api_d_fundamental_data = FundamentalData(key=API_KEY, output_format='pandas')
     api_d_time_series = TimeSeries(key=API_KEY, output_format='pandas')
-
     # d_time_series, _ = api_d_time_series.get_daily_adjusted(symbol='ticker', outputsize='full')
     d_quarterly_income, _ = api_d_fundamental_data.get_income_statement_quarterly(symbol=ticker)
 

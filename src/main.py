@@ -8,14 +8,15 @@ import pandas as pd
 
 torch.manual_seed(41)
 ticker = 'AAPL'
-T_COMBINED = data.main(ticker, False)
 
+T_COMBINED = data.main(ticker)
 model = model_class.LSTMModel(inputL=T_COMBINED.shape[1], hiddenL1=200, hiddenL2=200, hiddenL3=200, outputL=1)
 criterion = torch.nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-def train(t_combined):
-    x_train, x_test, y_train, y_test, main_scaler, price_scaler = data.prepare_training_data(t_combined)
+def train_and_test():
+
+    x_train, x_test, y_train, y_test, main_scaler, price_scaler = data.prepare_training_data(T_COMBINED)
 
     print("x_train:", x_train.shape)
     print("x_test:", x_test.shape)
@@ -98,7 +99,7 @@ def train(t_combined):
 
     return final_prediction, losses, test_losses, y_test_descaled, main_scaler, price_scaler
 
-#prediction, losses, test_losses, y_test, main_scaler, price_scaler = train(T_COMBINED)
+#prediction, losses, test_losses, y_test, main_scaler, price_scaler = train_and_test()
 
 def plot(losses, test_losses, prediction, y_test, price_scaler):
 
@@ -127,11 +128,11 @@ def evaluate_prediction(actual, forecast):
 
 #evaluate_prediction(y_test, prediction)
 
-def test_once(test_ticker):
+def test_once(test_ticker, call_data_to_excel_main = False):
     model.load_state_dict(torch.load('best_model.pth'))
     model.eval()
 
-    t_combined = data.main(test_ticker, False) # data.main calls data_to_excel.main if True
+    t_combined = data.main(test_ticker, call_data_to_excel_main) # data.main calls data_to_excel.main if True
 
     x_train, x_test, y_train, y_test, main_scaler, price_scaler = data.prepare_training_data(t_combined)
 
@@ -153,12 +154,11 @@ def test_once(test_ticker):
     date = d_time_series['date'][:len(prediction_descaled)]
     date = date[-len(y_test_descaled):]
 
-    # Load and plot losses
+    # load and plot losses
     losses = pd.read_csv("../model_output/losses.csv")['0'].tolist()
     test_losses = pd.read_csv("../model_output/test_losses.csv")['0'].tolist()
 
     plot(losses, test_losses, prediction_descaled, y_test_descaled, price_scaler)
     evaluate_prediction(y_test_descaled, prediction_descaled)
 
-ticker = 'NFLX'
-test_once(ticker)
+test_once('NFLX')
