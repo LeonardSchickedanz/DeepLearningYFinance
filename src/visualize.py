@@ -36,17 +36,13 @@ def plot_losses(losses, test_losses):
 import plotly.graph_objects as go
 import numpy as np
 
-def plot_stocks(dates, y_test, y_pred_test, scaler):
+def plot_stocks(dates, y_test, y_pred_test):
 
-    y_test = np.array(y_test)
-    y_pred_test = np.array(y_pred_test)
+    y_test_transformed = np.array(y_test)
+    y_pred_transformed = np.array(y_pred_test)
 
-    if scaler is None: # already descaled
-        y_test_transformed = y_test
-        y_pred_transformed = y_pred_test
-    else:
-        y_test_transformed = scaler.inverse_transform(y_test.reshape(-1, 1))
-        y_pred_transformed = scaler.inverse_transform(y_pred_test.reshape(-1, 1))
+    print(f"values before plotting, y_test: {y_test_transformed[:5]}")
+    print(f"values before plotting, y_pred_test: {y_pred_transformed[:5]}")
 
     # inverse
    # y_test_transformed = y_test_transformed[::-1]

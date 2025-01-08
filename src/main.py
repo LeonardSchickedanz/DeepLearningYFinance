@@ -6,10 +6,7 @@ import torch
 import visualize as v
 import pandas as pd
 
-torch.manual_seed(41)
-ticker = 'NFLX'
-
-def plot(losses, test_losses, prediction, y_test, price_scaler):
+def plot(losses, test_losses, prediction, y_test):
 
     v.plot_losses(losses, test_losses)
     d_time_series = pd.read_excel(r'C:\Users\LeonardSchickedanz\PycharmProjects\PredictStockPrice\data\processed\d_timeseries.xlsx', index_col=0)
@@ -18,7 +15,7 @@ def plot(losses, test_losses, prediction, y_test, price_scaler):
     date = date[:len(prediction)]
     date = date[-len(y_test):]
 
-    v.plot_stocks(date, y_test, prediction, price_scaler)
+    v.plot_stocks(date, y_test, prediction)
 
 def evaluate_prediction(actual, forecast):
     if isinstance(actual, torch.Tensor):
@@ -34,25 +31,15 @@ def evaluate_prediction(actual, forecast):
     mape = np.mean(np.abs(diff / actual)) * 100
 
     r_squared = 1 - (np.sum((actual - forecast) ** 2) / np.sum((actual - np.mean(actual)) ** 2))
+    print("\n")
     print(f'mean absolut error: {mae}')
     print(f'mean squared error: {mse}')
     print(f'root mean squared error: {rmse}')
     print(f'R-Squared: {r_squared}')
     print(f'mean absolute percentage error: {mape}')
 
-T_COMBINED = data.main(ticker, False)
-model = model_class.LSTMModel(inputL=T_COMBINED.shape[1], hiddenL1=200, hiddenL2=200, hiddenL3=200, outputL=1)
-criterion = torch.nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-
-def train_and_test(epochs=200):
-
-    x_train, x_test, y_train, y_test, main_scaler, price_scaler = data.prepare_training_data(T_COMBINED)
-
-    print("x_train:", x_train.shape)
-    print("x_test:", x_test.shape)
-    print("y_train:", y_train.shape)
-    print("y_test:", y_test.shape)
+def train_and_test(t_combined, epochs=200):
+    x_train, x_test, y_train, y_test, main_scaler, price_scaler = data.prepare_training_data(t_combined)
 
     train_dataset = torch.utils.data.TensorDataset(x_train, y_train)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=32, shuffle=False)
@@ -62,7 +49,7 @@ def train_and_test(epochs=200):
 
     # early stopping parameter
     best_loss = float('inf')
-    patience = 10
+    patience = 20
     no_improve = 0
     best_prediction = None
 
@@ -107,7 +94,7 @@ def train_and_test(epochs=200):
                 no_improve += 1
 
             if no_improve >= patience:
-                print(f"Early stopping at epoch {epoch}")
+                print(f"EARLY STOPPING AT EPOCH {epoch}")
                 break
 
         print(f"Epoch {epoch}: Train Loss = {avg_loss}, Test Loss = {test_loss.item()}")
@@ -127,8 +114,8 @@ def train_and_test(epochs=200):
     pd.DataFrame(losses).to_csv("../model_output/losses.csv", index=False)
     pd.DataFrame(test_losses).to_csv("../model_output/test_losses.csv", index=False)
 
-    evaluate_prediction(y_test, final_prediction)
-    plot(losses, test_losses, final_prediction, y_test_descaled, None)
+    evaluate_prediction(y_test_descaled, final_prediction)
+    plot(losses, test_losses, final_prediction, y_test_descaled)
 
 def test_once(test_ticker, call_data_to_excel_main = False):
     model.load_state_dict(torch.load('best_model.pth'))
@@ -152,8 +139,16 @@ def test_once(test_ticker, call_data_to_excel_main = False):
     losses = pd.read_csv("../model_output/losses.csv")['0'].tolist()
     test_losses = pd.read_csv("../model_output/test_losses.csv")['0'].tolist()
 
-    plot(losses, test_losses, prediction_descaled, y_test_descaled, price_scaler)
+    plot(losses, test_losses, prediction_descaled, y_test_descaled)
     evaluate_prediction(y_test_descaled, prediction_descaled)
 
-#test_once(ticker)
-train_and_test(epochs = 3)
+torch.manual_seed(89)
+ticker = 'AAPL'
+
+T_COMBINED = data.main(ticker, False)
+model = model_class.LSTMModel(inputL=T_COMBINED.shape[1], hiddenL1=200, hiddenL2=200, hiddenL3=200, outputL=1)
+criterion = torch.nn.MSELoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+
+# test_once(ticker)
+train_and_test(t_combined=T_COMBINED, epochs = 10)

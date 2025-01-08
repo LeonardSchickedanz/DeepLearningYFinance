@@ -7,20 +7,6 @@ from src.data import data_to_excel
 # d_ = raw data
 # f_ = features
 
-top_100_sp500 = (
-    "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "BRK.B", "META", "TSLA", "V", "JNJ",
-    "WMT", "PG", "XOM", "MA", "LLY", "UNH", "HD", "AVGO", "JPM", "CVX",
-    "MRK", "ABBV", "PEP", "KO", "COST", "ORCL", "MS", "MCD", "TMO", "CSCO",
-    "ADBE", "NFLX", "NKE", "AMD", "CRM", "LIN", "VZ", "WFC", "RTX", "INTC",
-    "CMCSA", "SCHW", "NEE", "TXN", "PM", "HON", "UNP", "IBM", "UPS", "QCOM",
-    "ELV", "AMGN", "PLD", "LOW", "MDT", "SPGI", "INTU", "AMT", "DHR", "BMY",
-    "CAT", "GE", "GS", "NOW", "MO", "T", "BKNG", "SYK", "BLK", "AXP",
-    "GILD", "ISRG", "ZTS", "ADP", "MDLZ", "DE", "CB", "PGR", "CCI", "CI",
-    "EQIX", "DUK", "SO", "MMC", "USB", "C", "REGN", "TGT", "BDX", "APD",
-    "ITW", "ADI", "HUM", "ETN", "NSC", "PNC", "WM", "AON", "ADSK", "MU",
-    "MET", "VRTX", "EL", "AEP", "SLB", "TRV", "EOG", "SHW"
-    )
-
 # when running from main.py
 directory = '../data_xlsx/'
 directory_processed = '../data/processed/'
@@ -28,7 +14,6 @@ directory_processed = '../data/processed/'
 # when running from data.py
 #directory = '../../data_xlsx/'
 #directory_processed = '../../data/processed/'
-
 
 DATA_LIST = (
     pd.read_excel(f'{directory_processed}d_real_gdp.xlsx', index_col=0),
