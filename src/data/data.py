@@ -50,9 +50,10 @@ def read_and_merge_dataframes(dataframes):
     d_merged = d_merged.drop(columns='value')
     return d_merged
 
-
-def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, closed_price_column=36):
+def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, closed_price_column=33):
+    print("close_price_column: ", closed_price_column)
     tensor = torch.flip(tensor, [0])
+
     size_rows = tensor.size(0)
     x = []
     y = []
@@ -78,7 +79,7 @@ def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, close
         dtype=tensor.dtype
     )
 
-    # Tensor wieder zusammenbauen
+    # put tensor back together
     scaled_tensor = torch.cat([
         scaled_rest_columns[:, :closed_price_column],
         scaled_price_column,
@@ -103,7 +104,7 @@ def prepare_training_data(tensor, look_back_days=365, forecast_horizon=30, close
     x_test = x[split_index:]
     y_test = y[split_index:]
 
-    # Reshape für das Training
+    # reshape
     y_train = y_train.view(-1, 1)
     y_test = y_test.view(-1, 1)
 
