@@ -41,8 +41,13 @@ def evaluate_prediction(actual, forecast):
 def train_and_test(t_combined, epochs=200):
     x_train, x_test, y_train, y_test, main_scaler, price_scaler = data.prepare_training_data(t_combined)
 
+    print("x_train:", x_train.shape)
+    print("x_test:", x_test.shape)
+    print("y_train:", y_train.shape)
+    print("y_test:", y_test.shape)
+
     train_dataset = torch.utils.data.TensorDataset(x_train, y_train)
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=32, shuffle=False)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=False)
 
     losses = []
     test_losses = []
@@ -146,9 +151,11 @@ torch.manual_seed(89)
 ticker = 'AAPL'
 
 T_COMBINED = data.main(ticker, False)
+print("T_COMBINED shape: ", T_COMBINED.shape)
 model = model_class.LSTMModel(inputL=T_COMBINED.shape[1], hiddenL1=200, hiddenL2=200, hiddenL3=200, outputL=1)
 criterion = torch.nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
 # test_once(ticker)
-train_and_test(t_combined=T_COMBINED, epochs = 10)
+print(T_COMBINED.shape[1])
+train_and_test(t_combined=T_COMBINED, epochs = 200)
