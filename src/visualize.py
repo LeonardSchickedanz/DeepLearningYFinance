@@ -45,8 +45,8 @@ def plot_stocks(dates, y_test, y_pred_test):
     print(f"values before plotting, y_pred_test: {y_pred_transformed[:5]}")
 
     # inverse
-   # y_test_transformed = y_test_transformed[::-1]
-   # y_pred_transformed = y_pred_transformed[::-1]
+    y_test_transformed = y_test_transformed[::-1]
+    y_pred_transformed = y_pred_transformed[::-1]
 
     min_len = min(len(dates), len(y_test_transformed), len(y_pred_transformed))
     dates = dates[-min_len:]

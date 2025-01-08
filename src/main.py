@@ -47,7 +47,7 @@ def train_and_test(t_combined, epochs=200):
     print("y_test:", y_test.shape)
 
     train_dataset = torch.utils.data.TensorDataset(x_train, y_train)
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=False)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True)
 
     losses = []
     test_losses = []
@@ -159,3 +159,5 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 # test_once(ticker)
 print(T_COMBINED.shape[1])
 train_and_test(t_combined=T_COMBINED, epochs = 200)
+
+# i think data is reversed, check that (reversed it, so should be fine now)
