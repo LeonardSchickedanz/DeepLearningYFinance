@@ -155,16 +155,13 @@ def main(ticker):
 
     for df in DATA_LIST:
         df['date'] = pd.to_datetime(df['date'])
-    date_columns = [df['date'] for df in DATA_LIST]
-    max_d = min(df['date'].max() for df in DATA_LIST) # currently 2023-01-01
+    max_d = min(df['date'].max() for df in DATA_LIST)
     min_d = max(df['date'].min() for df in DATA_LIST)
 
     # UNIX TIME STAMPS AND STRETCH DATA
     for idx1, df1 in enumerate(DATA_LIST):
         DATA_LIST[idx1] = stretch_data(data=df1,min_date=min_d ,max_date=max_d)
         DATA_LIST[idx1] = date_to_unix_time_stamp(DATA_LIST[idx1])
-
-    #DATA_LIST[10].to_excel(r'C:\Users\LeonardSchickedanz\PycharmProjects\PredictStockPrice\data\d_timeseries_raw3.xlsx')
 
     # CHECK DATA
     assertion_length = len(DATA_LIST[0]['date'])

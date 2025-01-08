@@ -1,7 +1,7 @@
 def plot_losses(losses, test_losses):
     fig = go.Figure()
 
-    # Training Loss
+    # training Loss
     fig.add_trace(go.Scatter(
         y=losses,
         mode='lines',
@@ -9,7 +9,7 @@ def plot_losses(losses, test_losses):
         line=dict(color='blue')
     ))
 
-    # Test Loss
+    # test Loss
     fig.add_trace(go.Scatter(
         y=test_losses,
         mode='lines',
@@ -26,11 +26,11 @@ def plot_losses(losses, test_losses):
         template="plotly_white"
     )
 
-    # Grid lines
+    # grid lines
     fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
     fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
 
-    # Show plot
+    # show plot
     fig.show()
 
 import plotly.graph_objects as go

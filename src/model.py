@@ -10,7 +10,7 @@ class LSTMModel(nn.Module):
 
         self.fullyConnected2 = nn.Linear(hiddenL1, hiddenL2)
         self.fullyConnected3 = nn.Linear(hiddenL2, hiddenL3)
-        self.fullyConnected4 = nn.Linear(hiddenL3, outputL)  # Ausgabe ist 1, z.B. die Vorhersage für Tag 30
+        self.fullyConnected4 = nn.Linear(hiddenL3, outputL)
 
     def forward(self, x, hidden_state = None, cell_state = None):
 
